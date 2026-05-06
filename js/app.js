@@ -441,44 +441,153 @@ function renderAllSections(coverages) {
 // ===== 올인원 렌더링 =====
 function renderAllinone(coverages) {
   const container = document.getElementById('allinoneContent');
-  const cats = ['암', '뇌', '심', '상해', '운전자', '수술', '입원일당'];
-  const catColors = {
-    '암': '', '뇌': 'section-title-brain', '심': 'section-title-heart',
-    '수술': 'section-title-surgery', '입원일당': 'section-title-daily',
-    '상해': 'section-title-injury', '운전자': 'section-title-driver'
-  };
-  const catIcons = { '암': '🔬', '뇌': '🧠', '심': '❤️', '상해': '🦴', '운전자': '🚗', '수술': '⚕️', '입원일당': '🏥' };
-
-  const totalPremium = sumPremiums(coverages);
   const customer = document.getElementById('customerName').value.trim() || '고객';
   const product = document.getElementById('productName').value.trim() || '';
   const payment = document.getElementById('paymentInfo').value.trim() || '';
+  const totalPremium = sumPremiums(coverages);
 
-  let sectionsHtml = '';
-  cats.forEach(cat => {
-    const items = getCatCoverages(coverages, cat);
-    sectionsHtml += `
-      <div class="coverage-section">
-        <div class="section-title ${catColors[cat] || ''}">
-          ${catIcons[cat]} ${cat} 담보
-          <span style="margin-left:auto; font-size:12px; font-weight:400;">${items.length}개</span>
+  // 키워드로 담보 검색 후 금액 합산, 없으면 "미가입" 표시
+  function byKw(...kws) {
+    return coverages.filter(c => kws.some(kw => c.name.includes(kw)));
+  }
+  function amt(color, ...kws) {
+    const items = byKw(...kws);
+    const total = sumAmounts(items);
+    if (total === 0) return `<span style="color:#bbb; font-size:12px;">미가입</span>`;
+    return `<span style="color:${color}; font-weight:800; font-size:14px;">${formatManwon(toManwon(total))}</span>`;
+  }
+  function amtDaily(color, ...kws) {
+    const items = byKw(...kws);
+    const total = sumAmounts(items);
+    if (total === 0) return `<span style="color:#bbb; font-size:12px;">미가입</span>`;
+    return `<span style="color:${color}; font-weight:800; font-size:12px;">${Math.round(total).toLocaleString()}원/일</span>`;
+  }
+
+  // 치료 섹션 만들기: colDefs = [{icon, label, desc, kws}], rows = [{label, kws, daily}]
+  function makeTreatSection(num, color, bgLight, title, subtitle, colDefs, rows) {
+    const colCount = colDefs.length;
+    const colPct = Math.floor(72 / colCount);
+
+    const headerCells = colDefs.map(c => `
+      <td style="text-align:center; padding:7px 4px 5px; border-left:1px solid ${color}40; background:${bgLight};">
+        <div style="font-size:16px; margin-bottom:2px;">${c.icon}</div>
+        <div style="font-weight:800; font-size:11px; color:${color}; line-height:1.3;">${c.label}</div>
+        <div style="font-size:9px; color:#666; margin-top:2px; line-height:1.3;">${c.desc}</div>
+      </td>`).join('');
+
+    const rowsHtml = rows.map((r, ri) => {
+      const dataCells = colDefs.map(c => {
+        const val = r.daily ? amtDaily(color, ...(c.kws || []), ...(r.kws || [])) : amt(color, ...(c.kws || []));
+        // For rows that use per-row kws (same val across columns), recalculate correctly
+        const cellVal = r.colKws
+          ? amt(color, ...(r.colKws[colDefs.indexOf(c)] || []))
+          : (r.sharedKws ? amt(color, ...r.sharedKws) : amt(color, ...(c.kws || [])));
+        return `<td style="text-align:center; padding:7px 4px; border-left:1px solid ${color}25; ${ri % 2 === 1 ? 'background:#fafafa;' : ''}">${cellVal}</td>`;
+      }).join('');
+      return `<tr>
+        <td style="padding:7px 10px; font-size:11px; font-weight:700; color:${color}; white-space:nowrap; ${ri % 2 === 1 ? 'background:#fafafa;' : ''}">${r.label}</td>
+        ${dataCells}
+      </tr>`;
+    }).join('');
+
+    return `
+      <div style="border:2px solid ${color}; border-radius:8px; margin-bottom:10px; overflow:hidden;">
+        <div style="background:${color}; color:white; padding:7px 14px; display:flex; align-items:center; gap:10px; font-weight:800;">
+          <span style="font-size:14px; font-weight:900; background:white; color:${color}; border-radius:50%; width:22px; height:22px; display:inline-flex; align-items:center; justify-content:center; flex-shrink:0;">${num}</span>
+          <span style="font-size:13px;">${title}</span>
+          ${subtitle ? `<span style="font-size:9px; font-weight:400; opacity:0.85; margin-left:4px; word-break:keep-all;">| ${subtitle}</span>` : ''}
         </div>
-        <div class="coverage-list">
-          ${makeCoverageList(items)}
+        <table style="width:100%; border-collapse:collapse; table-layout:fixed;">
+          <colgroup><col style="width:28%">${colDefs.map(() => `<col style="width:${colPct}%">`).join('')}</colgroup>
+          <thead><tr style="border-bottom:2px solid ${color}50;">${'<td></td>'}${headerCells}</tr></thead>
+          <tbody>${rowsHtml}</tbody>
+        </table>
+      </div>`;
+  }
+
+  // ① 암 섹션 컬럼 정의
+  const cancerCols = [
+    { icon: '🤖', label: '다빈치로봇수술', desc: '로봇 최소침습 수술', kws: ['다빈치로봇'] },
+    { icon: '💊', label: '표적항암치료', desc: '암세포 표적 약물', kws: ['표적항암'] },
+    { icon: '🧬', label: '면역항암치료', desc: 'CAR-T·면역세포치료', kws: ['카티(CAR-T)', '면역항암'] },
+    { icon: '☢️', label: '양성자치료', desc: '방사선 정밀치료', kws: ['양성자'] },
+  ];
+  const cancerRows = [
+    { label: '연1회 반복 보장 ▶', colKws: cancerCols.map(c => c.kws) },
+    { label: '통원치료비 ▶',       sharedKws: ['암통원'] },
+  ];
+
+  // ② 뇌혈관 섹션 컬럼 정의
+  const brainCols = [
+    { icon: '💉', label: '혈전용해치료', desc: '혈관에 약물 주입', kws: ['혈전용해치료비'] },
+    { icon: '🔧', label: '혈전제거치료', desc: '카테터로 혈전 제거', kws: ['심뇌혈관질환주요치료비', '심뇌혈관질환수술'] },
+    { icon: '🏥', label: '신의료수술(비관혈)', desc: '스텐트·코일색전술', kws: ['심뇌혈관질환수술'] },
+    { icon: '⚕️', label: '개두수술(관혈)', desc: '클립결찰·개두술', kws: ['심뇌혈관질환수술'] },
+  ];
+  const brainRows = [
+    { label: '연1회 반복 보장 ▶', colKws: brainCols.map(c => c.kws) },
+    { label: '중환자실 1일이상 ▶', sharedKws: ['심뇌혈관수술입원일당', '심뇌혈관입원일당'] },
+  ];
+
+  // ③ 심혈관 섹션 컬럼 정의
+  const heartCols = [
+    { icon: '💉', label: '혈전용해치료', desc: '혈관에 약물 주입', kws: ['혈전용해치료비'] },
+    { icon: '🫀', label: '관상동맥수술', desc: '스텐트·풍선확장술', kws: ['허혈심장질환수술', '심뇌혈관질환수술'] },
+    { icon: '⚡', label: '부정맥수술', desc: '전극도자·생동시술', kws: ['인공심박동기', '이식형제세동기', '항응고제'] },
+    { icon: '💗', label: '심장수술', desc: '인공심박동기 삽입 등', kws: ['심뇌혈관질환수술', '심뇌혈관질환주요치료비'] },
+  ];
+  const heartRows = [
+    { label: '연1회 반복 보장 ▶', colKws: heartCols.map(c => c.kws) },
+    { label: '중환자실 1일이상 ▶', sharedKws: ['심뇌혈관수술입원일당', '심뇌혈관입원일당'] },
+  ];
+
+  // ④ 치매 + ⑤ 간병인 (2열 나란히)
+  const dementiaMain = amt('#9944CC', '치매주요치료비');
+  const dementiaDiag = amt('#9944CC', '치매진단');
+  const care180 = amt('#228844', '간병인사용질병입원일당', '간병인사용입원일당');
+  const care365 = amt('#228844', '간호간병통합서비스');
+
+  const bottomSection = `
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px;">
+      <div style="border:2px solid #9944CC; border-radius:8px; overflow:hidden;">
+        <div style="background:#9944CC; color:white; padding:7px 14px; font-weight:800; font-size:13px; display:flex; align-items:center; gap:8px;">
+          <span style="background:white; color:#9944CC; border-radius:50%; width:22px; height:22px; display:inline-flex; align-items:center; justify-content:center; font-size:14px; flex-shrink:0;">④</span>
+          치매에 걸려도!
         </div>
+        <table style="width:100%; border-collapse:collapse;">
+          <tr><td style="padding:7px 12px; font-size:11px; font-weight:700; color:#9944CC; width:55%;">💊 레켐비 등 치매주요치료비 ▶</td><td style="padding:7px 8px; text-align:right;">${dementiaMain}</td></tr>
+          <tr style="background:#fafafa;"><td style="padding:7px 12px; font-size:11px; font-weight:700; color:#9944CC;">🔬 치매진단 ▶</td><td style="padding:7px 8px; text-align:right;">${dementiaDiag}</td></tr>
+        </table>
       </div>
-    `;
-  });
+      <div style="border:2px solid #228844; border-radius:8px; overflow:hidden;">
+        <div style="background:#228844; color:white; padding:7px 14px; font-weight:800; font-size:13px; display:flex; align-items:center; gap:8px;">
+          <span style="background:white; color:#228844; border-radius:50%; width:22px; height:22px; display:inline-flex; align-items:center; justify-content:center; font-size:14px; flex-shrink:0;">⑤</span>
+          간병인을 사용해도!
+        </div>
+        <table style="width:100%; border-collapse:collapse;">
+          <tr><td style="padding:7px 12px; font-size:11px; font-weight:700; color:#228844; width:55%;">🏥 상해·질병 입원 간병인 ▶</td><td style="padding:7px 8px; text-align:right;">${care180}</td></tr>
+          <tr style="background:#fafafa;"><td style="padding:7px 12px; font-size:11px; font-weight:700; color:#228844;">🏨 간호간병 통합서비스 ▶</td><td style="padding:7px 8px; text-align:right;">${care365}</td></tr>
+        </table>
+      </div>
+    </div>`;
+
+  const cancerHtml  = makeTreatSection('①', '#CC0000', '#FFF5F5', '암에 걸려도!', '암 = 진단 + 수술 + 항암치료', cancerCols, cancerRows);
+  const brainHtml   = makeTreatSection('②', '#3344CC', '#F0F2FF', '뇌혈관질환에 걸려도!', '뇌출혈 + 뇌경색 + 경동맥협착 + 뇌동맥류 등', brainCols, brainRows);
+  const heartHtml   = makeTreatSection('③', '#CC1155', '#FFF0F5', '심혈관질환에 걸려도!', '협심증 + 심근경색 + 부정맥 + 심장판막질환 등', heartCols, heartRows);
 
   container.innerHTML = `
     <div class="proposal-page">
-      ${makePageHeader('📊', "안 보이는 '내 보험'을 한눈에 보여주는 스마트제안서", '내 보험 전체 보장 한눈에')}
+      ${makePageHeader('📊', "안 보이는 '내 보험'을 한눈에 보여주는 스마트제안서", '치료보장 · 통합치료비 플랜')}
       <div class="page-body">
-        <div style="display:flex; justify-content:flex-end; align-items:center; margin-bottom:12px; font-size:12px; color:var(--text-light);">
-          <span>월 납입 보험료 합계 <strong style="color:var(--orange); font-size:14px;">${Math.round(totalPremium).toLocaleString()}원</strong></span>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; padding:7px 12px; background:#FFF8F0; border-radius:6px; border:1px solid #FFD9B0; font-size:12px;">
+          <span style="font-weight:700; color:#333;">[ ${customer} ] 고객님${product ? ' · ' + product : ''}${payment ? ' · ' + payment : ''}</span>
+          <span style="font-weight:700; color:var(--orange);">월 보험료 <strong>${Math.round(totalPremium).toLocaleString()}원</strong></span>
         </div>
-        <div class="allinone-grid">${sectionsHtml}</div>
-        <div class="notice-box" style="margin-top:16px;">
+        ${cancerHtml}
+        ${brainHtml}
+        ${heartHtml}
+        ${bottomSection}
+        <div class="notice-box">
           ⚠️ 위 보장내용은 실제 증권 내용과 다를 수 있으며, 정확한 내용은 보험증권을 확인해 주시기 바랍니다.
         </div>
       </div>
