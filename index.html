@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>스마트 제안서 | 현대해상화재보험</title>
+<style>
+/* ===== 기본 리셋 & 폰트 ===== */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Malgun Gothic', '맑은 고딕', -apple-system, sans-serif; background: #FFF5F0; color: #2D2D2D; font-size: 14px; }
+
+/* ===== 색상 변수 ===== */
+:root {
+  --orange: #F05A22;
+  --orange-dark: #C44418;
+  --orange-light: #FF8A5C;
+  --orange-pale: #FFF0E8;
+  --orange-bg: #FFF5F0;
+  --white: #FFFFFF;
+  --gray-light: #F8F8F8;
+  --gray: #E0E0E0;
+  --gray-dark: #999;
+  --text: #2D2D2D;
+  --text-light: #666;
+  --blue-accent: #1A5FA8;
+  --green-accent: #28A745;
+  --shadow: 0 2px 12px rgba(240,90,34,0.12);
+}
+
+/* ===== 상단 헤더 ===== */
+.header {
+  background: linear-gradient(135deg, var(--orange) 0%, var(--orange-dark) 100%);
+  color: white;
+  padding: 0;
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 1000;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+}
+.header-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 24px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+.header-logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.logo-badge {
+  width: 42px; height: 42px;
+  background: rgba(255,255,255,0.25);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  border: 2px solid rgba(255,255,255,0.4);
+}
+.header-title { font-size: 20px; font-weight: 700; letter-spacing: -0.3px; }
+.header-sub { font-size: 11px; opacity: 0.85; margin-top: 2px; }
+.header-info {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-size: 13px;
+  opacity: 0.9;
+}
+.header-info span { display: flex; align-items: center; gap: 4px; }
+
+/* ===== 탭 네비게이션 ===== */
+.nav-tabs {
+  background: white;
+  border-bottom: 3px solid var(--orange);
+  position: fixed;
+  top: 66px; left: 0; right: 0;
+  z-index: 999;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  overflow-x: auto;
+}
+.nav-tabs::-webkit-scrollbar { height: 3px; }
+.nav-tabs::-webkit-scrollbar-thumb { background: var(--orange-light); }
+.tabs-inner {
+  display: flex;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 16px;
+}
+.tab-btn {
+  padding: 12px 18px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-light);
+  white-space: nowrap;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -3px;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.tab-btn:hover { color: var(--orange); background: var(--orange-pale); }
+.tab-btn.active {
+  color: var(--orange);
+  border-bottom-color: var(--orange);
+  background: var(--orange-pale);
+}
+.tab-btn .tab-icon { font-size: 16px; }
+.tab-badge {
+  background: var(--orange);
+  color: white;
+  font-size: 10px;
+  padding: 1px 5px;
+  border-radius: 8px;
+  font-weight: 700;
+}
+
+/* ===== 메인 컨텐츠 ===== */
+.main-content {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 130px 16px 40px;
+}
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+
+/* ===== 카드 공통 스타일 ===== */
+.card {
+  background: white;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: var(--shadow);
+  margin-bottom: 20px;
+  border: 1px solid rgba(240,90,34,0.08);
+}
+.card-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+  padding-bottom: 14px;
+  border-bottom: 2px solid var(--orange-pale);
+}
+.card-header h2 { font-size: 17px; font-weight: 700; color: var(--text); }
+.card-icon {
+  width: 36px; height: 36px;
+  background: linear-gradient(135deg, var(--orange), var(--orange-light));
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  color: white;
+}
+
+/* ===== 입력 탭 ===== */
+.input-grid { display: grid; grid-template-columns: 1fr 2fr; gap: 20px; }
+@media (max-width: 900px) { .input-grid { grid-template-columns: 1fr; } }
+
+.form-group { margin-bottom: 16px; }
+.form-label { font-size: 12px; font-weight: 700; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; display: block; }
+.form-input {
+  width: 100%;
+  padding: 10px 14px;
+  border: 2px solid var(--gray);
+  border-radius: 10px;
+  font-size: 14px;
+  transition: border-color 0.2s;
+  font-family: inherit;
+}
+.form-input:focus { outline: none; border-color: var(--orange); box-shadow: 0 0 0 3px rgba(240,90,34,0.1); }
+
+.paste-area {
+  width: 100%;
+  min-height: 200px;
+  padding: 14px;
+  border: 2px dashed var(--orange-light);
+  border-radius: 12px;
+  font-size: 13px;
+  font-family: 'Consolas', monospace;
+  background: var(--orange-pale);
+  resize: vertical;
+  transition: border-color 0.2s;
+}
+.paste-area:focus { outline: none; border-color: var(--orange); background: white; }
+
+.paste-hint {
+  font-size: 12px;
+  color: var(--text-light);
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn {
+  padding: 11px 24px;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 700;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: inherit;
+}
+.btn-primary {
+  background: linear-gradient(135deg, var(--orange), var(--orange-dark));
+  color: white;
+  box-shadow: 0 4px 12px rgba(240,90,34,0.3);
+}
+.btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(240,90,34,0.4); }
+.btn-primary:active { transform: translateY(0); }
+.btn-outline {
+  background: white;
+  color: var(--orange);
+  border: 2px solid var(--orange);
+}
+.btn-outline:hover { background: var(--orange-pale); }
+.btn-gray { background: var(--gray); color: var(--text-light); }
+.btn-group { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 12px; }
+
+/* ===== 파싱 결과 테이블 ===== */
+.result-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.result-table th {
+  background: var(--orange);
+  color: white;
+  padding: 10px 12px;
+  text-align: left;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.result-table th:first-child { border-radius: 8px 0 0 0; }
+.result-table th:last-child { border-radius: 0 8px 0 0; }
+.result-table td { padding: 8px 12px; border-bottom: 1px solid var(--gray); vertical-align: middle; }
+.result-table tr:hover { background: var(--orange-pale); }
+.result-table tr:last-child td { border-bottom: none; }
+.cat-badge {
+  padding: 3px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.cat-암 { background: #FFE5E5; color: #CC0000; }
+.cat-뇌 { background: #E5E5FF; color: #3300CC; }
+.cat-심 { background: #FFE5F5; color: #CC0066; }
+.cat-상해 { background: #E5F5FF; color: #006699; }
+.cat-운전자 { background: #F0FFE5; color: #336600; }
+.cat-입원일당 { background: #FFF5E5; color: #996600; }
+.cat-수술 { background: #F5E5FF; color: #660099; }
+.cat-기타 { background: #F0F0F0; color: #666; }
+
+.amount-cell { text-align: right; font-weight: 700; color: var(--orange-dark); font-variant-numeric: tabular-nums; }
+.premium-cell { text-align: right; color: var(--text-light); font-variant-numeric: tabular-nums; }
+
+/* ===== 요약 통계 ===== */
+.stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 20px; }
+.stat-card {
+  background: white;
+  border-radius: 12px;
+  padding: 16px;
+  text-align: center;
+  border: 2px solid var(--gray);
+  transition: all 0.2s;
+  cursor: default;
+}
+.stat-card:hover { border-color: var(--orange); transform: translateY(-2px); box-shadow: var(--shadow); }
+.stat-card.active { border-color: var(--orange); background: var(--orange-pale); }
+.stat-num { font-size: 22px; font-weight: 800; color: var(--orange); margin-bottom: 4px; }
+.stat-label { font-size: 11px; color: var(--text-light); font-weight: 600; }
+
+/* ===== 출력물 공통 스타일 ===== */
+.proposal-page {
+  background: white;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: var(--shadow);
+  border: 1px solid rgba(240,90,34,0.1);
+  margin-bottom: 24px;
+}
+.page-header {
+  background: linear-gradient(135deg, var(--orange) 0%, var(--orange-dark) 100%);
+  color: white;
+  padding: 20px 28px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+.page-header-left h1 { font-size: 20px; font-weight: 800; letter-spacing: -0.5px; }
+.page-header-left .subtitle { font-size: 12px; opacity: 0.85; margin-top: 4px; }
+.page-header-right { text-align: right; font-size: 13px; opacity: 0.9; }
+.page-header-right .customer-name { font-size: 18px; font-weight: 700; margin-bottom: 2px; }
+
+.page-body { padding: 24px 28px; }
+
+/* ===== 올인원 레이아웃 ===== */
+.allinone-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+@media (max-width: 900px) { .allinone-grid { grid-template-columns: 1fr; } }
+
+.coverage-section { margin-bottom: 0; }
+.section-title {
+  font-size: 13px;
+  font-weight: 800;
+  color: white;
+  background: var(--orange);
+  padding: 8px 14px;
+  border-radius: 8px 8px 0 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.section-title-brain { background: #3344CC; }
+.section-title-heart { background: #CC1155; }
+.section-title-surgery { background: #660099; }
+.section-title-daily { background: #996600; }
+.section-title-injury { background: #006699; }
+.section-title-driver { background: #336600; }
+
+.coverage-list { border: 1px solid var(--gray); border-top: none; border-radius: 0 0 8px 8px; overflow: hidden; }
+.coverage-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 9px 14px;
+  border-bottom: 1px solid #F0F0F0;
+  font-size: 13px;
+}
+.coverage-item:last-child { border-bottom: none; }
+.coverage-item:nth-child(even) { background: var(--gray-light); }
+.coverage-label { flex: 1; color: var(--text); }
+.coverage-amount { font-weight: 700; color: var(--orange-dark); min-width: 80px; text-align: right; }
+.coverage-amount.zero { color: var(--gray-dark); font-weight: 400; }
+
+/* ===== 암 보장 레이아웃 ===== */
+.proposal-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0; }
+@media (max-width: 1100px) { .proposal-grid { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 700px) { .proposal-grid { grid-template-columns: 1fr; } }
+
+.proposal-col { border-right: 1px solid var(--gray); }
+.proposal-col:last-child { border-right: none; }
+
+.col-header {
+  background: var(--orange-pale);
+  padding: 12px 16px;
+  border-bottom: 2px solid var(--orange);
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--orange);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.col-header.blue { background: #EEF2FF; border-bottom-color: var(--blue-accent); color: var(--blue-accent); }
+.col-header.purple { background: #F5EEFF; border-bottom-color: #660099; color: #660099; }
+
+.coverage-group-title {
+  padding: 8px 16px;
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--text-light);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  background: #F8F8F8;
+  border-bottom: 1px solid var(--gray);
+}
+
+.total-bar {
+  background: var(--orange-pale);
+  padding: 12px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 2px solid var(--orange);
+  margin-top: auto;
+}
+.total-label { font-size: 13px; font-weight: 700; color: var(--orange-dark); }
+.total-amount { font-size: 18px; font-weight: 800; color: var(--orange); }
+
+/* ===== 보험금 흐름 다이어그램 ===== */
+.flow-diagram {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  border: 1px solid var(--gray);
+  border-radius: 12px;
+  overflow: hidden;
+  margin: 16px 0;
+}
+.flow-stage {
+  flex: 1;
+  padding: 16px 12px;
+  text-align: center;
+  border-right: 1px solid var(--gray);
+  position: relative;
+}
+.flow-stage:last-child { border-right: none; }
+.flow-stage-title { font-size: 11px; font-weight: 700; color: var(--text-light); margin-bottom: 8px; }
+.flow-stage-amount { font-size: 20px; font-weight: 800; color: var(--orange); margin-bottom: 4px; }
+.flow-stage-desc { font-size: 11px; color: var(--text-light); line-height: 1.4; }
+.flow-arrow {
+  display: flex;
+  align-items: center;
+  padding: 0 8px;
+  color: var(--orange);
+  font-size: 20px;
+}
+
+/* ===== 알림 & 배지 ===== */
+.notice-box {
+  background: var(--orange-pale);
+  border-left: 4px solid var(--orange);
+  padding: 12px 16px;
+  border-radius: 0 8px 8px 0;
+  font-size: 12px;
+  color: var(--text-light);
+  margin: 12px 0;
+}
+.highlight-box {
+  background: linear-gradient(135deg, var(--orange), var(--orange-dark));
+  color: white;
+  padding: 16px 20px;
+  border-radius: 12px;
+  margin: 16px 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.highlight-label { font-size: 13px; opacity: 0.9; }
+.highlight-amount { font-size: 26px; font-weight: 800; }
+
+/* ===== 인쇄 영역 컨트롤 ===== */
+.print-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.print-controls h3 { font-size: 15px; font-weight: 700; }
+
+/* ===== 빈 상태 ===== */
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--text-light);
+}
+.empty-state-icon { font-size: 56px; margin-bottom: 16px; }
+.empty-state h3 { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+.empty-state p { font-size: 14px; }
+
+/* ===== 인쇄 스타일 ===== */
+@media print {
+  .header, .nav-tabs, .print-controls, .btn-group { display: none !important; }
+  .main-content { padding: 0; }
+  .tab-content { display: block !important; }
+  .proposal-page { box-shadow: none; border: 1px solid #ccc; page-break-after: always; }
+  body { background: white; }
+  .card { box-shadow: none; }
+}
+
+/* ===== 로딩 ===== */
+.loading-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(255,255,255,0.85);
+  z-index: 9999;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 16px;
+}
+.loading-overlay.active { display: flex; }
+.spinner {
+  width: 48px; height: 48px;
+  border: 5px solid var(--orange-pale);
+  border-top-color: var(--orange);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ===== 섹션 구분선 ===== */
+.section-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 20px 0;
+  color: var(--text-light);
+  font-size: 12px;
+  font-weight: 700;
+}
+.section-divider::before, .section-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--gray);
+}
+
+/* ===== 프리미엄 배지 ===== */
+.premium-summary {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 16px 0;
+}
+.premium-item {
+  flex: 1;
+  min-width: 120px;
+  background: white;
+  border: 2px solid var(--gray);
+  border-radius: 10px;
+  padding: 12px 16px;
+  text-align: center;
+}
+.premium-item.main { border-color: var(--orange); background: var(--orange-pale); }
+.premium-item-label { font-size: 11px; color: var(--text-light); font-weight: 600; }
+.premium-item-value { font-size: 18px; font-weight: 800; color: var(--orange); margin-top: 4px; }
+</style>
+</head>
+<body>
+
+<!-- 로딩 오버레이 -->
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="spinner"></div>
+  <div style="color: var(--orange); font-weight: 700;">데이터 분석 중...</div>
+</div>
+
+<!-- 상단 헤더 -->
+<header class="header">
+  <div class="header-inner">
+    <div class="header-logo">
+      <div class="logo-badge">🛡️</div>
+      <div>
+        <div class="header-title">스마트 제안서</div>
+        <div class="header-sub">현대해상화재보험 · Smart Proposal System</div>
+      </div>
+    </div>
+    <div class="header-info">
+      <span id="headerPlanner">🙋 플래너명을 입력하세요</span>
+      <span id="headerCustomer" style="font-weight:700;">👤 고객명을 입력하세요</span>
+    </div>
+  </div>
+</header>
+
+<!-- 탭 네비게이션 -->
+<nav class="nav-tabs">
+  <div class="tabs-inner">
+    <button class="tab-btn active" onclick="switchTab('input')" id="tab-input">
+      <span class="tab-icon">📋</span> 데이터 입력
+    </button>
+    <button class="tab-btn" onclick="switchTab('allinone')" id="tab-allinone">
+      <span class="tab-icon">📊</span> 올인원
+    </button>
+    <button class="tab-btn" onclick="switchTab('cancer')" id="tab-cancer">
+      <span class="tab-icon">🔬</span> 암 보장
+    </button>
+    <button class="tab-btn" onclick="switchTab('brain')" id="tab-brain">
+      <span class="tab-icon">🧠</span> 뇌 보장
+    </button>
+    <button class="tab-btn" onclick="switchTab('heart')" id="tab-heart">
+      <span class="tab-icon">❤️</span> 심장 보장
+    </button>
+    <button class="tab-btn" onclick="switchTab('injury')" id="tab-injury">
+      <span class="tab-icon">🦴</span> 상해 보장
+    </button>
+    <button class="tab-btn" onclick="switchTab('driver')" id="tab-driver">
+      <span class="tab-icon">🚗</span> 운전자 보장
+    </button>
+    <button class="tab-btn" onclick="switchTab('daily')" id="tab-daily">
+      <span class="tab-icon">🏥</span> 입원일당
+    </button>
+    <button class="tab-btn" onclick="switchTab('surgery')" id="tab-surgery">
+      <span class="tab-icon">⚕️</span> 수술(남)
+    </button>
+  </div>
+</nav>
+
+<main class="main-content">
+
+<!-- ===== 데이터 입력 탭 ===== -->
+<div class="tab-content active" id="content-input">
+  <div class="input-grid">
+    <!-- 고객 정보 입력 -->
+    <div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-icon">👤</div>
+          <h2>고객 & 플래너 정보</h2>
+        </div>
+        <div class="form-group">
+          <label class="form-label">고객 이름</label>
+          <input type="text" id="customerName" class="form-input" placeholder="예) 홍길동" oninput="updateHeader()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">생년월일</label>
+          <input type="text" id="customerBirth" class="form-input" placeholder="예) 1984.04.01">
+        </div>
+        <div class="form-group">
+          <label class="form-label">성별</label>
+          <select id="customerGender" class="form-input">
+            <option value="">선택</option>
+            <option value="남">남</option>
+            <option value="여">여</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">플래너 이름</label>
+          <input type="text" id="plannerName" class="form-input" placeholder="예) 임현자" oninput="updateHeader()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">지점명</label>
+          <input type="text" id="branchName" class="form-input" placeholder="예) 잠실지점">
+        </div>
+        <div class="form-group">
+          <label class="form-label">상품명</label>
+          <input type="text" id="productName" class="form-input" placeholder="예) 퍼펙트플러스종합보험">
+        </div>
+        <div class="form-group">
+          <label class="form-label">납입 방식</label>
+          <input type="text" id="paymentInfo" class="form-input" placeholder="예) 20년납 100세만기">
+        </div>
+      </div>
+
+      <!-- 요약 통계 -->
+      <div class="card" id="summaryCard" style="display:none;">
+        <div class="card-header">
+          <div class="card-icon">📈</div>
+          <h2>담보 분류 현황</h2>
+        </div>
+        <div class="stats-grid" id="statsGrid"></div>
+        <div class="premium-summary" id="premiumSummary"></div>
+      </div>
+    </div>
+
+    <!-- 데이터 붙여넣기 -->
+    <div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-icon">📋</div>
+          <h2>하이플래너 데이터 붙여넣기</h2>
+        </div>
+        <div class="notice-box">
+          💡 하이플래너에서 담보 목록을 선택 후 <strong>Ctrl+A → Ctrl+C</strong>로 복사하여 아래에 붙여넣기 하세요.<br>
+          <span style="color: var(--orange);">담보코드, 담보명, 가입금액, 보험료</span> 열이 포함되어야 합니다.
+        </div>
+        <textarea id="pasteArea" class="paste-area" placeholder="하이플래너 데이터를 여기에 붙여넣기 하세요 (Ctrl+V)&#10;&#10;예시:&#10;서열	생년월일	담보	담보명	납기/만기	가입금액	보험료&#10;00001	8404011	3A02	기본계약(상해사망)	20년납100세만기	100000000	5050&#10;00001	8404011	4186	보험료납입면제대상담보	전기납20년만기	100000	80"></textarea>
+        <div class="paste-hint">
+          ℹ️ 탭(Tab)으로 구분된 텍스트 형식을 지원합니다.
+        </div>
+        <div class="btn-group">
+          <button class="btn btn-primary" onclick="parseData()">⚡ 데이터 분석하기</button>
+          <button class="btn btn-outline" onclick="loadSampleData()">📄 샘플 데이터 불러오기</button>
+          <button class="btn btn-gray" onclick="clearAll()">🗑️ 초기화</button>
+        </div>
+      </div>
+
+      <!-- 파싱 결과 테이블 -->
+      <div class="card" id="resultCard" style="display:none;">
+        <div class="card-header">
+          <div class="card-icon">✅</div>
+          <h2>분석 결과</h2>
+          <span id="resultCount" style="font-size:12px; color:var(--text-light); margin-left:auto;"></span>
+        </div>
+        <div style="overflow-x:auto; max-height:400px; overflow-y:auto;">
+          <table class="result-table" id="resultTable">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>카테고리</th>
+                <th>담보명</th>
+                <th>가입금액</th>
+                <th>보험료</th>
+              </tr>
+            </thead>
+            <tbody id="resultBody"></tbody>
+          </table>
+        </div>
+        <div class="btn-group" style="margin-top:16px;">
+          <button class="btn btn-primary" onclick="switchTab('allinone')">📊 올인원 보기</button>
+          <button class="btn btn-outline" onclick="window.print()">🖨️ 전체 인쇄</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 올인원 탭 ===== -->
+<div class="tab-content" id="content-allinone">
+  <div class="print-controls">
+    <h3>📊 올인원 · 전체 보장 요약</h3>
+    <div class="btn-group">
+      <button class="btn btn-primary" onclick="printSection('allinone')">🖨️ 인쇄</button>
+      <button class="btn btn-outline" onclick="switchTab('input')">← 데이터 입력</button>
+    </div>
+  </div>
+  <div id="allinoneContent">
+    <div class="empty-state">
+      <div class="empty-state-icon">📊</div>
+      <h3>데이터를 먼저 입력해주세요</h3>
+      <p>데이터 입력 탭에서 하이플래너 데이터를 붙여넣고 분석하면 이 화면이 채워집니다.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 암 보장 탭 ===== -->
+<div class="tab-content" id="content-cancer">
+  <div class="print-controls">
+    <h3>🔬 암 보장 제안서</h3>
+    <div class="btn-group">
+      <button class="btn btn-primary" onclick="printSection('cancer')">🖨️ 인쇄</button>
+    </div>
+  </div>
+  <div id="cancerContent">
+    <div class="empty-state"><div class="empty-state-icon">🔬</div><h3>데이터를 먼저 입력해주세요</h3></div>
+  </div>
+</div>
+
+<!-- ===== 뇌 보장 탭 ===== -->
+<div class="tab-content" id="content-brain">
+  <div class="print-controls">
+    <h3>🧠 뇌 보장 제안서</h3>
+    <div class="btn-group">
+      <button class="btn btn-primary" onclick="printSection('brain')">🖨️ 인쇄</button>
+    </div>
+  </div>
+  <div id="brainContent">
+    <div class="empty-state"><div class="empty-state-icon">🧠</div><h3>데이터를 먼저 입력해주세요</h3></div>
+  </div>
+</div>
+
+<!-- ===== 심장 보장 탭 ===== -->
+<div class="tab-content" id="content-heart">
+  <div class="print-controls">
+    <h3>❤️ 심장 보장 제안서</h3>
+    <div class="btn-group">
+      <button class="btn btn-primary" onclick="printSection('heart')">🖨️ 인쇄</button>
+    </div>
+  </div>
+  <div id="heartContent">
+    <div class="empty-state"><div class="empty-state-icon">❤️</div><h3>데이터를 먼저 입력해주세요</h3></div>
+  </div>
+</div>
+
+<!-- ===== 상해 보장 탭 ===== -->
+<div class="tab-content" id="content-injury">
+  <div class="print-controls">
+    <h3>🦴 상해 보장 제안서</h3>
+    <div class="btn-group">
+      <button class="btn btn-primary" onclick="printSection('injury')">🖨️ 인쇄</button>
+    </div>
+  </div>
+  <div id="injuryContent">
+    <div class="empty-state"><div class="empty-state-icon">🦴</div><h3>데이터를 먼저 입력해주세요</h3></div>
+  </div>
+</div>
+
+<!-- ===== 운전자 보장 탭 ===== -->
+<div class="tab-content" id="content-driver">
+  <div class="print-controls">
+    <h3>🚗 운전자 보장 제안서</h3>
+    <div class="btn-group">
+      <button class="btn btn-primary" onclick="printSection('driver')">🖨️ 인쇄</button>
+    </div>
+  </div>
+  <div id="driverContent">
+    <div class="empty-state"><div class="empty-state-icon">🚗</div><h3>데이터를 먼저 입력해주세요</h3></div>
+  </div>
+</div>
+
+<!-- ===== 입원일당 탭 ===== -->
+<div class="tab-content" id="content-daily">
+  <div class="print-controls">
+    <h3>🏥 입원일당 보장 제안서</h3>
+    <div class="btn-group">
+      <button class="btn btn-primary" onclick="printSection('daily')">🖨️ 인쇄</button>
+    </div>
+  </div>
+  <div id="dailyContent">
+    <div class="empty-state"><div class="empty-state-icon">🏥</div><h3>데이터를 먼저 입력해주세요</h3></div>
+  </div>
+</div>
+
+<!-- ===== 수술(남) 탭 ===== -->
+<div class="tab-content" id="content-surgery">
+  <div class="print-controls">
+    <h3>⚕️ 수술 보장 제안서 (남성)</h3>
+    <div class="btn-group">
+      <button class="btn btn-primary" onclick="printSection('surgery')">🖨️ 인쇄</button>
+    </div>
+  </div>
+  <div id="surgeryContent">
+    <div class="empty-state"><div class="empty-state-icon">⚕️</div><h3>데이터를 먼저 입력해주세요</h3></div>
+  </div>
+</div>
+
+</main>
+
+<script src="js/coverage-map.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
