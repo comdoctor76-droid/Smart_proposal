@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>스마트 제안서 v0.14 | 현대해상화재보험</title>
+<title>스마트 제안서 v0.15 | 현대해상화재보험</title>
 <!-- QR코드 API용 캐시 허용 -->
 <meta http-equiv="Content-Security-Policy" content="img-src * data:;">
 <style>
@@ -511,7 +511,11 @@ body { font-family: 'Malgun Gothic', '맑은 고딕', -apple-system, sans-serif;
   .highlight-box { padding: 10px 14px; }
   .highlight-amount { font-size: 20px; }
   .print-qr { display: block !important; }
+  /* 올인원: 화면용 숨기고 인쇄용만 표시 */
+  .allinone-screen-view { display: none !important; }
 }
+/* 올인원: 인쇄용은 화면에서 숨김 */
+@media screen { .allinone-print-view { display: none !important; } }
 /* 모바일 보험료 폰트 축소 */
 @media (max-width: 768px) {
   .premium-cell { font-size: 11px !important; }
@@ -631,7 +635,7 @@ body { font-family: 'Malgun Gothic', '맑은 고딕', -apple-system, sans-serif;
       <div class="logo-badge">🛡️</div>
       <div>
         <div class="header-title">스마트 제안서</div>
-        <div class="header-sub">현대해상화재보험 · Smart Proposal System <span style="background:rgba(255,255,255,0.25); padding:1px 7px; border-radius:8px; font-size:10px; margin-left:6px; letter-spacing:0.5px;">v0.14</span></div>
+        <div class="header-sub">현대해상화재보험 · Smart Proposal System <span style="background:rgba(255,255,255,0.25); padding:1px 7px; border-radius:8px; font-size:10px; margin-left:6px; letter-spacing:0.5px;">v0.15</span></div>
       </div>
     </div>
     <div class="header-info">
