@@ -3,7 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>스마트 제안서 v0.02 | 현대해상화재보험</title>
+<title>스마트 제안서 v0.04 | 현대해상화재보험</title>
+<!-- QR코드 API용 캐시 허용 -->
+<meta http-equiv="Content-Security-Policy" content="img-src * data:;">
 <style>
 /* ===== 기본 리셋 & 폰트 ===== */
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -466,7 +468,8 @@ body { font-family: 'Malgun Gothic', '맑은 고딕', -apple-system, sans-serif;
 @media print {
   .header, .nav-tabs, .print-controls, .btn-group { display: none !important; }
   .main-content { padding: 0; max-width: 100%; }
-  .tab-content { display: block !important; }
+  .tab-content { display: none !important; }
+  .tab-content.active { display: block !important; }
   .proposal-page {
     box-shadow: none;
     border: none;
@@ -488,6 +491,12 @@ body { font-family: 'Malgun Gothic', '맑은 고딕', -apple-system, sans-serif;
   .card { box-shadow: none; }
   .highlight-box { padding: 10px 14px; }
   .highlight-amount { font-size: 20px; }
+  .print-qr { display: block !important; }
+}
+/* 모바일 보험료 폰트 축소 */
+@media (max-width: 768px) {
+  .premium-cell { font-size: 11px !important; }
+  .result-table td { padding: 7px 6px; }
 }
 
 /* ===== 로딩 ===== */
@@ -565,7 +574,7 @@ body { font-family: 'Malgun Gothic', '맑은 고딕', -apple-system, sans-serif;
       <div class="logo-badge">🛡️</div>
       <div>
         <div class="header-title">스마트 제안서</div>
-        <div class="header-sub">현대해상화재보험 · Smart Proposal System <span style="background:rgba(255,255,255,0.25); padding:1px 7px; border-radius:8px; font-size:10px; margin-left:6px; letter-spacing:0.5px;">v0.02</span></div>
+        <div class="header-sub">현대해상화재보험 · Smart Proposal System <span style="background:rgba(255,255,255,0.25); padding:1px 7px; border-radius:8px; font-size:10px; margin-left:6px; letter-spacing:0.5px;">v0.04</span></div>
       </div>
     </div>
     <div class="header-info">
@@ -645,14 +654,14 @@ body { font-family: 'Malgun Gothic', '맑은 고딕', -apple-system, sans-serif;
           <span id="resultCount" style="font-size:12px; color:var(--text-light); margin-left:auto;"></span>
         </div>
         <div style="overflow-x:auto; max-height:400px; overflow-y:auto;">
-          <table class="result-table" id="resultTable">
+          <table class="result-table" id="resultTable" style="table-layout:fixed; width:100%;">
             <thead>
               <tr>
-                <th style="width:32px;">#</th>
-                <th style="width:36px;"></th>
-                <th>담보명</th>
-                <th style="white-space:nowrap;">금액</th>
-                <th style="white-space:nowrap;">보험료</th>
+                <th style="width:4%;">#</th>
+                <th style="width:10%;">구분</th>
+                <th style="width:55%;">담보명</th>
+                <th style="width:15%; white-space:nowrap;">금액</th>
+                <th style="width:16%; white-space:nowrap;">보험료</th>
               </tr>
             </thead>
             <tbody id="resultBody"></tbody>
