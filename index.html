@@ -160,8 +160,11 @@ body { font-family: 'Malgun Gothic', '맑은 고딕', -apple-system, sans-serif;
 }
 
 /* ===== 입력 탭 ===== */
-.input-grid { display: grid; grid-template-columns: 1fr 2fr; gap: 20px; }
+.input-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
 @media (max-width: 900px) { .input-grid { grid-template-columns: 1fr; } }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media (max-width: 600px) { .form-row { grid-template-columns: 1fr; } }
+.form-row .form-group { margin-bottom: 0; }
 
 .form-group { margin-bottom: 16px; }
 .form-label { font-size: 12px; font-weight: 700; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; display: block; }
@@ -616,76 +619,20 @@ body { font-family: 'Malgun Gothic', '맑은 고딕', -apple-system, sans-serif;
 <!-- ===== 데이터 입력 탭 ===== -->
 <div class="tab-content active" id="content-input">
   <div class="input-grid">
-    <!-- 고객 정보 입력 -->
-    <div>
-      <div class="card">
-        <div class="card-header">
-          <div class="card-icon">👤</div>
-          <h2>고객 & 플래너 정보</h2>
-        </div>
-        <div class="form-group">
-          <label class="form-label">고객 이름</label>
-          <input type="text" id="customerName" class="form-input" placeholder="예) 홍길동" oninput="updateHeader()">
-        </div>
-        <div class="form-group">
-          <label class="form-label">생년월일</label>
-          <input type="text" id="customerBirth" class="form-input" placeholder="예) 1984.04.01">
-        </div>
-        <div class="form-group">
-          <label class="form-label">성별</label>
-          <select id="customerGender" class="form-input">
-            <option value="">선택</option>
-            <option value="남">남</option>
-            <option value="여">여</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label class="form-label">플래너 이름</label>
-          <input type="text" id="plannerName" class="form-input" placeholder="예) 임현자" oninput="updateHeader()">
-        </div>
-        <div class="form-group">
-          <label class="form-label">지점명</label>
-          <input type="text" id="branchName" class="form-input" placeholder="예) 잠실지점">
-        </div>
-        <div class="form-group">
-          <label class="form-label">상품명</label>
-          <input type="text" id="productName" class="form-input" placeholder="예) 퍼펙트플러스종합보험">
-        </div>
-        <div class="form-group">
-          <label class="form-label">납입 방식</label>
-          <input type="text" id="paymentInfo" class="form-input" placeholder="예) 20년납 100세만기">
-        </div>
-      </div>
-
-      <!-- 요약 통계 -->
-      <div class="card" id="summaryCard" style="display:none;">
-        <div class="card-header">
-          <div class="card-icon">📈</div>
-          <h2>담보 분류 현황</h2>
-        </div>
-        <div class="stats-grid" id="statsGrid"></div>
-        <div class="premium-summary" id="premiumSummary"></div>
-      </div>
-    </div>
-
-    <!-- 데이터 붙여넣기 -->
+    <!-- 설계 붙이기 (왼쪽, 넓은 열) -->
     <div>
       <div class="card">
         <div class="card-header">
           <div class="card-icon">📋</div>
-          <h2>하이플래너 데이터 붙여넣기</h2>
+          <h2>설계 붙이기</h2>
         </div>
         <div class="notice-box">
-          💡 하이플래너에서 담보 목록을 선택 후 <strong>Ctrl+A → Ctrl+C</strong>로 복사하여 아래에 붙여넣기 하세요.<br>
-          <span style="color: var(--orange);">담보코드, 담보명, 가입금액, 보험료</span> 열이 포함되어야 합니다.
+          💡 하이플래너 설계 화면에서 <strong>Ctrl+A → Ctrl+C</strong>로 복사하여 아래에 붙여넣기 하세요.
         </div>
-        <textarea id="pasteArea" class="paste-area" placeholder="하이플래너 데이터를 여기에 붙여넣기 하세요 (Ctrl+V)&#10;&#10;예시:&#10;서열	생년월일	담보	담보명	납기/만기	가입금액	보험료&#10;00001	8404011	3A02	기본계약(상해사망)	20년납100세만기	100000000	5050&#10;00001	8404011	4186	보험료납입면제대상담보	전기납20년만기	100000	80"></textarea>
-        <div class="paste-hint">
-          ℹ️ 탭(Tab)으로 구분된 텍스트 형식을 지원합니다.
-        </div>
+        <textarea id="pasteArea" class="paste-area" style="min-height:160px;" placeholder="하이플래너 설계 데이터를 여기에 붙여넣기 하세요 (Ctrl+V)&#10;&#10;예시:&#10;서열	생년월일	담보	담보명	납기/만기	가입금액	보험료&#10;00001	8404011	3A02	기본계약(상해사망)	20년납100세만기	100000000	5050"></textarea>
         <div class="btn-group">
           <button class="btn btn-primary" onclick="parseData()">⚡ 데이터 분석하기</button>
-          <button class="btn btn-outline" onclick="loadSampleData()">📄 샘플 데이터 불러오기</button>
+          <button class="btn btn-outline" onclick="loadSampleData()">📄 샘플 불러오기</button>
           <button class="btn btn-gray" onclick="clearAll()">🗑️ 초기화</button>
         </div>
       </div>
@@ -701,11 +648,11 @@ body { font-family: 'Malgun Gothic', '맑은 고딕', -apple-system, sans-serif;
           <table class="result-table" id="resultTable">
             <thead>
               <tr>
-                <th>#</th>
-                <th>카테고리</th>
+                <th style="width:32px;">#</th>
+                <th style="width:36px;"></th>
                 <th>담보명</th>
-                <th>가입금액</th>
-                <th>보험료</th>
+                <th style="white-space:nowrap;">금액</th>
+                <th style="white-space:nowrap;">보험료</th>
               </tr>
             </thead>
             <tbody id="resultBody"></tbody>
@@ -715,6 +662,64 @@ body { font-family: 'Malgun Gothic', '맑은 고딕', -apple-system, sans-serif;
           <button class="btn btn-primary" onclick="switchTab('allinone')">📊 올인원 보기</button>
           <button class="btn btn-outline" onclick="window.print()">🖨️ 전체 인쇄</button>
         </div>
+      </div>
+    </div>
+
+    <!-- 고객 & 플래너 정보 (오른쪽, 좁은 열) -->
+    <div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-icon">👤</div>
+          <h2>고객 & 플래너 정보</h2>
+        </div>
+        <div class="form-row" style="margin-bottom:12px;">
+          <div class="form-group">
+            <label class="form-label">고객 이름</label>
+            <input type="text" id="customerName" class="form-input" placeholder="홍길동" oninput="updateHeader()">
+          </div>
+          <div class="form-group">
+            <label class="form-label">생년월일</label>
+            <input type="text" id="customerBirth" class="form-input" placeholder="1984.04.01">
+          </div>
+        </div>
+        <div class="form-row" style="margin-bottom:12px;">
+          <div class="form-group">
+            <label class="form-label">성별</label>
+            <select id="customerGender" class="form-input">
+              <option value="">선택</option>
+              <option value="남">남</option>
+              <option value="여">여</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">플래너 이름</label>
+            <input type="text" id="plannerName" class="form-input" placeholder="임현자" oninput="updateHeader()">
+          </div>
+        </div>
+        <div class="form-row" style="margin-bottom:12px;">
+          <div class="form-group">
+            <label class="form-label">지점명</label>
+            <input type="text" id="branchName" class="form-input" placeholder="잠실지점">
+          </div>
+          <div class="form-group">
+            <label class="form-label">납입 방식</label>
+            <input type="text" id="paymentInfo" class="form-input" placeholder="20년납 100세만기">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">상품명</label>
+          <input type="text" id="productName" class="form-input" placeholder="퍼펙트플러스종합보험">
+        </div>
+      </div>
+
+      <!-- 요약 통계 -->
+      <div class="card" id="summaryCard" style="display:none;">
+        <div class="card-header">
+          <div class="card-icon">📈</div>
+          <h2>담보 분류 현황</h2>
+        </div>
+        <div class="stats-grid" id="statsGrid"></div>
+        <div class="premium-summary" id="premiumSummary"></div>
       </div>
     </div>
   </div>

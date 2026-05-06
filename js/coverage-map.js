@@ -231,12 +231,16 @@ function toManwon(amount) {
   return Math.round(n / 10000);
 }
 
-// 만원 단위 → 표시 문자열
+// 만원 단위 → 표시 문자열 (1000만 → 1천만, 10000만 → 1억)
 function formatManwon(manwon) {
   if (manwon === 0) return '-';
   if (manwon >= 10000) {
     const uk = manwon / 10000;
     return uk % 1 === 0 ? `${uk}억` : `${uk.toFixed(1)}억`;
+  }
+  if (manwon >= 1000) {
+    const chun = manwon / 1000;
+    return chun % 1 === 0 ? `${chun}천만` : `${(manwon / 1000).toFixed(1)}천만`;
   }
   return `${manwon}만`;
 }
