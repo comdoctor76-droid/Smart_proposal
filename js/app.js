@@ -242,10 +242,12 @@ function makePageHeader(icon, title, subtitle) {
 // ===== 전체 섹션 렌더링 =====
 function renderAllSections(coverages) {
   renderAllinone(coverages);
+  renderDeath(coverages);
+  renderOnePager(coverages);
   renderCancer(coverages);
   renderBrain(coverages);
   renderHeart(coverages);
-  renderInjury(coverages);
+  renderWoman(coverages);
   renderDriver(coverages);
   renderDaily(coverages);
   renderSurgery(coverages);
@@ -513,19 +515,27 @@ function renderHeart(coverages) {
   `;
 }
 
-// ===== 상해 보장 렌더링 =====
-function renderInjury(coverages) {
-  const container = document.getElementById('injuryContent');
+// ===== 사망·장해 보장 렌더링 =====
+function renderDeath(coverages) {
+  const container = document.getElementById('deathContent');
   const items = getCatCoverages(coverages, '상해');
 
   const deathItems = items.filter(c => c.cat.sub === '사망장해');
   const fracItems = items.filter(c => c.cat.sub === '골절화상');
   const rehabItems = items.filter(c => c.cat.sub === '재활');
+  const totalDeath = sumAmounts(deathItems);
 
   container.innerHTML = `
     <div class="proposal-page">
-      ${makePageHeader('🦴', '상해 보장 한번에 보여주는 스마트제안서', '사망·장해·골절·화상 보장')}
+      ${makePageHeader('🛡️', '사망·장해 보장 한번에 보여주는 스마트제안서', '상해사망·후유장해·골절·화상 보장')}
       <div class="page-body">
+        <div class="highlight-box">
+          <div>
+            <div class="highlight-label">상해 사망 시 보장 합계</div>
+            <div style="font-size:12px; opacity:0.8; margin-top:2px;">상해사망 담보 기준</div>
+          </div>
+          <div class="highlight-amount">${formatManwon(toManwon(totalDeath))}</div>
+        </div>
         <div class="proposal-grid">
           <div class="proposal-col">
             <div class="col-header" style="background:var(--orange-pale); color:var(--orange); border-bottom-color:var(--orange);">① 사망·장해 보장</div>
@@ -552,8 +562,222 @@ function renderInjury(coverages) {
             </div>
           </div>
         </div>
-        <div class="section-divider">상해 보장 상세 내역</div>
+        <div class="section-divider">사망·장해 보장 상세 내역</div>
         ${renderDetailTable(items)}
+      </div>
+    </div>
+  `;
+}
+
+// ===== 한장 요약 렌더링 =====
+function renderOnePager(coverages) {
+  const container = document.getElementById('onepagerContent');
+  const customer = document.getElementById('customerName').value.trim() || '고객';
+  const planner = document.getElementById('plannerName').value.trim() || '';
+  const branch = document.getElementById('branchName').value.trim() || '';
+  const product = document.getElementById('productName').value.trim() || '';
+  const payment = document.getElementById('paymentInfo').value.trim() || '';
+  const today = new Date().toLocaleDateString('ko-KR');
+
+  const cancerItems = getCatCoverages(coverages, '암');
+  const brainItems = getCatCoverages(coverages, '뇌');
+  const heartItems = getCatCoverages(coverages, '심');
+  const deathItems = getCatCoverages(coverages, '상해').filter(c => c.cat.sub === '사망장해');
+  const totalPremium = sumPremiums(coverages);
+
+  // 각 섹션별 진단 주요 금액
+  const cancerDiag = cancerItems.filter(c => c.cat.sub === '진단' && ['일반암', '특정암'].includes(c.cat.group));
+  const brainDiag = brainItems.filter(c => c.cat.sub === '진단');
+  const heartDiag = heartItems.filter(c => c.cat.sub === '진단');
+
+  function makeSection(icon, color, title, diagItems, allItems) {
+    const topItems = diagItems.slice(0, 5);
+    return `
+      <div style="flex:1; border:2px solid ${color}; border-radius:10px; overflow:hidden; min-width:180px;">
+        <div style="background:${color}; color:white; padding:10px 14px; font-size:14px; font-weight:800; display:flex; align-items:center; gap:8px;">
+          <span>${icon}</span> ${title}
+        </div>
+        <div style="padding:6px 0;">
+          ${topItems.length > 0 ? topItems.map(c => `
+            <div style="display:flex; justify-content:space-between; padding:6px 12px; border-bottom:1px solid #f0f0f0; font-size:12px;">
+              <span style="flex:1; color:#333;">${c.cat ? c.cat.label : c.name}</span>
+              <span style="font-weight:700; color:${color}; white-space:nowrap; margin-left:8px;">${formatManwon(toManwon(c.amount))}</span>
+            </div>
+          `).join('') : '<div style="padding:10px 12px; color:#999; font-size:12px;">담보 없음</div>'}
+          ${allItems.length > topItems.length ? `<div style="padding:6px 12px; font-size:11px; color:#999;">외 ${allItems.length - topItems.length}개 담보...</div>` : ''}
+        </div>
+        <div style="background:#f8f8f8; padding:8px 12px; display:flex; justify-content:space-between; align-items:center; border-top:1px solid #e0e0e0;">
+          <span style="font-size:11px; color:#666; font-weight:700;">총 ${allItems.length}개 담보</span>
+          <span style="font-size:14px; font-weight:800; color:${color};">${formatManwon(toManwon(sumAmounts(allItems)))}</span>
+        </div>
+      </div>
+    `;
+  }
+
+  container.innerHTML = `
+    <div class="proposal-page">
+      <div class="page-header">
+        <div class="page-header-left">
+          <h1>📄 스마트 제안서 · 한장 요약</h1>
+          <div class="subtitle">암 · 뇌 · 심장 핵심 보장 한눈에 보기</div>
+          <div style="margin-top:6px; font-size:11px; opacity:0.8;">※ 본 자료는 보험 상품을 쉽게 이해하기 위해 제작된 것으로 모집용으로 사용 불가</div>
+        </div>
+        <div class="page-header-right">
+          <div class="customer-name">< ${customer} > 고객님</div>
+          <div>${branch ? branch + ' ' : ''}${planner ? planner + ' 플래너' : ''}</div>
+          <div style="margin-top:4px; font-size:11px; opacity:0.8;">${today}</div>
+        </div>
+      </div>
+      <div class="page-body">
+        ${product ? `<div style="background:var(--orange-pale); padding:10px 14px; border-radius:8px; margin-bottom:14px; font-size:13px; font-weight:700;">📌 ${product}${payment ? ' · ' + payment : ''}</div>` : ''}
+
+        <div class="highlight-box" style="margin-bottom:16px;">
+          <div>
+            <div class="highlight-label">월 납입 보험료 합계</div>
+            <div style="font-size:12px; opacity:0.8; margin-top:2px;">전체 담보 기준 (총 ${coverages.length}개)</div>
+          </div>
+          <div class="highlight-amount">${Math.round(totalPremium).toLocaleString()}원</div>
+        </div>
+
+        <div style="display:flex; gap:14px; flex-wrap:wrap; margin-bottom:16px;">
+          ${makeSection('🔬', '#CC0000', '암 보장', cancerDiag, cancerItems)}
+          ${makeSection('🧠', '#3344CC', '뇌 보장', brainDiag, brainItems)}
+          ${makeSection('❤️', '#CC1155', '심장 보장', heartDiag, heartItems)}
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:14px;">
+          <div style="border:1px solid var(--gray); border-radius:8px; padding:12px 14px;">
+            <div style="font-size:12px; font-weight:800; color:var(--orange); margin-bottom:8px;">🛡️ 사망·장해 보장</div>
+            ${deathItems.slice(0, 4).map(c => `
+              <div style="display:flex; justify-content:space-between; font-size:12px; padding:3px 0; border-bottom:1px solid #f0f0f0;">
+                <span>${c.cat ? c.cat.label : c.name}</span>
+                <span style="font-weight:700; color:var(--orange);">${formatManwon(toManwon(c.amount))}</span>
+              </div>
+            `).join('')}
+            <div style="text-align:right; margin-top:6px; font-size:13px; font-weight:800; color:var(--orange);">${formatManwon(toManwon(sumAmounts(deathItems)))}</div>
+          </div>
+          <div style="border:1px solid var(--gray); border-radius:8px; padding:12px 14px; background:var(--orange-pale);">
+            <div style="font-size:12px; font-weight:800; color:var(--orange); margin-bottom:8px;">📊 보장 현황 요약</div>
+            <div style="font-size:12px; line-height:2;">
+              <div style="display:flex; justify-content:space-between;"><span>🔬 암 담보</span><span style="font-weight:700;">${cancerItems.length}개</span></div>
+              <div style="display:flex; justify-content:space-between;"><span>🧠 뇌 담보</span><span style="font-weight:700;">${brainItems.length}개</span></div>
+              <div style="display:flex; justify-content:space-between;"><span>❤️ 심장 담보</span><span style="font-weight:700;">${heartItems.length}개</span></div>
+              <div style="display:flex; justify-content:space-between;"><span>🛡️ 사망·장해</span><span style="font-weight:700;">${deathItems.length}개</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="notice-box">
+          ⚠️ 위 보장내용은 실제 증권 내용과 다를 수 있으며, 정확한 내용은 보험증권을 확인해 주시기 바랍니다.
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+// ===== 수술(여) 렌더링 =====
+function renderWoman(coverages) {
+  const container = document.getElementById('womanContent');
+  const surgItems = getCatCoverages(coverages, '수술');
+  const cancerItems = getCatCoverages(coverages, '암');
+
+  // 여성 수술 담보
+  const womanSurgItems = surgItems.filter(c => c.cat.sub === '여성수술');
+  // 여성 양성종양 (유방, 자궁근종, 자궁내막증, 갑상선결절)
+  const benignWoman = surgItems.filter(c => c.cat.sub === '여성양성종양' ||
+    (c.cat.group && ['유방양성종양', '자궁근종', '자궁내막증', '갑상선결절'].some(kw => c.cat.group.includes(kw))));
+  // 여성암 진단 (유방암, 자궁암, 난소암 등)
+  const womanCancerDiag = cancerItems.filter(c => c.cat.group && ['여성암', '유방암', '자궁암', '난소암'].some(kw => c.cat.group.includes(kw)));
+  const womanCancerAll = cancerItems.filter(c => c.cat.sub === '진단' && c.cat.group && c.cat.group.includes('여성'));
+  // 5대기관 및 일반 질병 수술
+  const mainItems = surgItems.filter(c => ['5대기관', '질병수술'].includes(c.cat.sub));
+  const specialItems = surgItems.filter(c => ['특수', '전신마취', '양성종양'].includes(c.cat.sub));
+
+  const womanBenignMap = [
+    { label: '유방양성종양', kw: ['유방양성', '유방종양'] },
+    { label: '자궁근종', kw: ['자궁근종'] },
+    { label: '자궁내막증', kw: ['자궁내막증'] },
+    { label: '갑상선결절', kw: ['갑상선결절', '갑상선'] },
+  ].map(b => ({
+    label: b.label,
+    amount: surgItems.find(c => b.kw.some(kw => c.name.includes(kw)))?.amount || 0
+  }));
+
+  const womanCancerMap = [
+    { label: '유방암', kw: ['유방암'] },
+    { label: '자궁암', kw: ['자궁암', '자궁경부암'] },
+    { label: '난소암', kw: ['난소암'] },
+    { label: '갑상선암', kw: ['갑상선암', '중증갑상선암'] },
+    { label: '폐암', kw: ['폐암'] },
+  ].map(b => ({
+    label: b.label,
+    amount: cancerItems.find(c => b.kw.some(kw => c.name.includes(kw)))?.amount || 0
+  }));
+
+  container.innerHTML = `
+    <div class="proposal-page">
+      ${makePageHeader('🌸', '수술 보장 한번에 보여주는 스마트제안서 (여성)', '여성 특화 수술·암 보장')}
+      <div class="page-body">
+        <div class="highlight-box" style="background:linear-gradient(135deg, #CC0066, #990044);">
+          <div>
+            <div class="highlight-label">▣ 여성양성종양 집중보장</div>
+            <div style="font-size:12px; opacity:0.8; margin-top:2px;">유방양성종양 / 자궁근종 / 자궁내막증 / 갑상선결절</div>
+          </div>
+          <div class="highlight-amount">${womanSurgItems.length + benignWoman.length + specialItems.length}개 담보</div>
+        </div>
+
+        <div style="margin:14px 0;">
+          <div style="font-size:12px; font-weight:800; color:#CC0066; margin-bottom:8px;">① 여성 양성종양 치료 보장</div>
+          <div class="flow-diagram">
+            ${womanBenignMap.map(b => `
+              <div class="flow-stage">
+                <div class="flow-stage-title">${b.label}</div>
+                <div class="flow-stage-amount">${b.amount > 0 ? formatManwon(toManwon(b.amount)) : '-'}</div>
+              </div>
+            `).join('<div class="flow-arrow">|</div>')}
+          </div>
+        </div>
+
+        <div style="margin:14px 0;">
+          <div style="font-size:12px; font-weight:800; color:#CC0066; margin-bottom:8px;">② 여성암 집중보장</div>
+          <div class="flow-diagram">
+            ${womanCancerMap.map(b => `
+              <div class="flow-stage">
+                <div class="flow-stage-title">${b.label}</div>
+                <div class="flow-stage-amount" style="color:#CC0000;">${b.amount > 0 ? formatManwon(toManwon(b.amount)) : '-'}</div>
+              </div>
+            `).join('<div class="flow-arrow">|</div>')}
+          </div>
+        </div>
+
+        <div class="proposal-grid">
+          <div class="proposal-col">
+            <div class="col-header" style="background:#FFE0EE; color:#CC0066; border-bottom-color:#CC0066;">① 여성 특정 수술</div>
+            ${makeCoverageList(womanSurgItems.length > 0 ? womanSurgItems : benignWoman)}
+            <div class="total-bar">
+              <span class="total-label">합계</span>
+              <span class="total-amount">${formatManwon(toManwon(sumAmounts(womanSurgItems.length > 0 ? womanSurgItems : benignWoman)))}</span>
+            </div>
+          </div>
+          <div class="proposal-col">
+            <div class="col-header blue">② 5대기관·주요수술</div>
+            ${makeCoverageList(mainItems)}
+            <div class="total-bar">
+              <span class="total-label">합계</span>
+              <span class="total-amount">${formatManwon(toManwon(sumAmounts(mainItems)))}</span>
+            </div>
+          </div>
+          <div class="proposal-col">
+            <div class="col-header purple">③ 특수·기타 수술</div>
+            ${makeCoverageList(specialItems)}
+            <div class="total-bar">
+              <span class="total-label">담보 수</span>
+              <span class="total-amount">${specialItems.length}개</span>
+            </div>
+          </div>
+        </div>
+        <div class="section-divider">수술(여) 보장 상세 내역</div>
+        ${renderDetailTable([...womanSurgItems, ...benignWoman, ...mainItems, ...specialItems])}
       </div>
     </div>
   `;
@@ -886,7 +1110,7 @@ function clearAll() {
   document.getElementById('resultCard').style.display = 'none';
   document.getElementById('summaryCard').style.display = 'none';
   parsedCoverages = [];
-  ['allinone', 'cancer', 'brain', 'heart', 'injury', 'driver', 'daily', 'surgery'].forEach(section => {
+  ['allinone', 'death', 'onepager', 'cancer', 'brain', 'heart', 'woman', 'driver', 'daily', 'surgery'].forEach(section => {
     const el = document.getElementById(section + 'Content');
     if (el) el.innerHTML = `<div class="empty-state"><div class="empty-state-icon">📊</div><h3>데이터를 먼저 입력해주세요</h3></div>`;
   });

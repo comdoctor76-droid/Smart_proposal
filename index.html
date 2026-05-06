@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>스마트 제안서 v0.01 | 현대해상화재보험</title>
+<title>스마트 제안서 v0.02 | 현대해상화재보험</title>
 <style>
 /* ===== 기본 리셋 & 폰트 ===== */
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -459,13 +459,32 @@ body { font-family: 'Malgun Gothic', '맑은 고딕', -apple-system, sans-serif;
 .empty-state p { font-size: 14px; }
 
 /* ===== 인쇄 스타일 ===== */
+@page { size: A4 portrait; margin: 10mm; }
 @media print {
   .header, .nav-tabs, .print-controls, .btn-group { display: none !important; }
-  .main-content { padding: 0; }
+  .main-content { padding: 0; max-width: 100%; }
   .tab-content { display: block !important; }
-  .proposal-page { box-shadow: none; border: 1px solid #ccc; page-break-after: always; }
+  .proposal-page {
+    box-shadow: none;
+    border: none;
+    page-break-after: always;
+    break-after: page;
+    width: 190mm;
+    min-height: 267mm;
+    font-size: 11px;
+    margin: 0;
+    border-radius: 0;
+  }
+  .proposal-page:last-child { page-break-after: avoid; break-after: avoid; }
+  .page-body { padding: 12px 16px; }
+  .page-header { padding: 12px 16px; }
+  .page-header-left h1 { font-size: 16px; }
+  .coverage-item { padding: 5px 10px; font-size: 11px; }
+  .proposal-grid { font-size: 11px; }
   body { background: white; }
   .card { box-shadow: none; }
+  .highlight-box { padding: 10px 14px; }
+  .highlight-amount { font-size: 20px; }
 }
 
 /* ===== 로딩 ===== */
@@ -543,7 +562,7 @@ body { font-family: 'Malgun Gothic', '맑은 고딕', -apple-system, sans-serif;
       <div class="logo-badge">🛡️</div>
       <div>
         <div class="header-title">스마트 제안서</div>
-        <div class="header-sub">현대해상화재보험 · Smart Proposal System <span style="background:rgba(255,255,255,0.25); padding:1px 7px; border-radius:8px; font-size:10px; margin-left:6px; letter-spacing:0.5px;">v0.01</span></div>
+        <div class="header-sub">현대해상화재보험 · Smart Proposal System <span style="background:rgba(255,255,255,0.25); padding:1px 7px; border-radius:8px; font-size:10px; margin-left:6px; letter-spacing:0.5px;">v0.02</span></div>
       </div>
     </div>
     <div class="header-info">
@@ -562,26 +581,32 @@ body { font-family: 'Malgun Gothic', '맑은 고딕', -apple-system, sans-serif;
     <button class="tab-btn" onclick="switchTab('allinone')" id="tab-allinone">
       <span class="tab-icon">📊</span> 올인원
     </button>
+    <button class="tab-btn" onclick="switchTab('death')" id="tab-death">
+      <span class="tab-icon">🛡️</span> 사망
+    </button>
+    <button class="tab-btn" onclick="switchTab('onepager')" id="tab-onepager">
+      <span class="tab-icon">📄</span> 한장
+    </button>
     <button class="tab-btn" onclick="switchTab('cancer')" id="tab-cancer">
-      <span class="tab-icon">🔬</span> 암 보장
+      <span class="tab-icon">🔬</span> 암
     </button>
     <button class="tab-btn" onclick="switchTab('brain')" id="tab-brain">
-      <span class="tab-icon">🧠</span> 뇌 보장
+      <span class="tab-icon">🧠</span> 뇌
     </button>
     <button class="tab-btn" onclick="switchTab('heart')" id="tab-heart">
-      <span class="tab-icon">❤️</span> 심장 보장
+      <span class="tab-icon">❤️</span> 심장
     </button>
-    <button class="tab-btn" onclick="switchTab('injury')" id="tab-injury">
-      <span class="tab-icon">🦴</span> 상해 보장
-    </button>
-    <button class="tab-btn" onclick="switchTab('driver')" id="tab-driver">
-      <span class="tab-icon">🚗</span> 운전자 보장
-    </button>
-    <button class="tab-btn" onclick="switchTab('daily')" id="tab-daily">
-      <span class="tab-icon">🏥</span> 입원일당
+    <button class="tab-btn" onclick="switchTab('woman')" id="tab-woman">
+      <span class="tab-icon">🌸</span> 수술(여)
     </button>
     <button class="tab-btn" onclick="switchTab('surgery')" id="tab-surgery">
       <span class="tab-icon">⚕️</span> 수술(남)
+    </button>
+    <button class="tab-btn" onclick="switchTab('driver')" id="tab-driver">
+      <span class="tab-icon">🚗</span> 운전자
+    </button>
+    <button class="tab-btn" onclick="switchTab('daily')" id="tab-daily">
+      <span class="tab-icon">🏥</span> 입원일당
     </button>
   </div>
 </nav>
@@ -752,16 +777,29 @@ body { font-family: 'Malgun Gothic', '맑은 고딕', -apple-system, sans-serif;
   </div>
 </div>
 
-<!-- ===== 상해 보장 탭 ===== -->
-<div class="tab-content" id="content-injury">
+<!-- ===== 사망 보장 탭 ===== -->
+<div class="tab-content" id="content-death">
   <div class="print-controls">
-    <h3>🦴 상해 보장 제안서</h3>
+    <h3>🛡️ 사망·장해 보장 제안서</h3>
     <div class="btn-group">
-      <button class="btn btn-primary" onclick="printSection('injury')">🖨️ 인쇄</button>
+      <button class="btn btn-primary" onclick="printSection('death')">🖨️ 인쇄</button>
     </div>
   </div>
-  <div id="injuryContent">
-    <div class="empty-state"><div class="empty-state-icon">🦴</div><h3>데이터를 먼저 입력해주세요</h3></div>
+  <div id="deathContent">
+    <div class="empty-state"><div class="empty-state-icon">🛡️</div><h3>데이터를 먼저 입력해주세요</h3></div>
+  </div>
+</div>
+
+<!-- ===== 한장 탭 ===== -->
+<div class="tab-content" id="content-onepager">
+  <div class="print-controls">
+    <h3>📄 한장 요약 제안서</h3>
+    <div class="btn-group">
+      <button class="btn btn-primary" onclick="printSection('onepager')">🖨️ 인쇄</button>
+    </div>
+  </div>
+  <div id="onepagerContent">
+    <div class="empty-state"><div class="empty-state-icon">📄</div><h3>데이터를 먼저 입력해주세요</h3></div>
   </div>
 </div>
 
@@ -788,6 +826,19 @@ body { font-family: 'Malgun Gothic', '맑은 고딕', -apple-system, sans-serif;
   </div>
   <div id="dailyContent">
     <div class="empty-state"><div class="empty-state-icon">🏥</div><h3>데이터를 먼저 입력해주세요</h3></div>
+  </div>
+</div>
+
+<!-- ===== 수술(여) 탭 ===== -->
+<div class="tab-content" id="content-woman">
+  <div class="print-controls">
+    <h3>🌸 수술 보장 제안서 (여성)</h3>
+    <div class="btn-group">
+      <button class="btn btn-primary" onclick="printSection('woman')">🖨️ 인쇄</button>
+    </div>
+  </div>
+  <div id="womanContent">
+    <div class="empty-state"><div class="empty-state-icon">🌸</div><h3>데이터를 먼저 입력해주세요</h3></div>
   </div>
 </div>
 
