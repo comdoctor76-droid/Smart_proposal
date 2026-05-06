@@ -118,6 +118,36 @@ const CAT_ICONS = {
 // QR코드 URL (앱 주소)
 const APP_URL = 'https://comdoctor76-droid.github.io/Smart_proposal/';
 
+// 탭별 QR 링크
+const TAB_QR_URLS = {
+  allinone: APP_URL + '?tab=allinone',
+  cancer:   APP_URL + '?tab=cancer',
+  brain:    APP_URL + '?tab=brain',
+  heart:    APP_URL + '?tab=heart',
+  death:    APP_URL + '?tab=death',
+  onepager: APP_URL + '?tab=onepager',
+  driver:   APP_URL + '?tab=driver',
+  daily:    APP_URL + '?tab=daily',
+  woman:    APP_URL + '?tab=woman',
+  surgery:  APP_URL + '?tab=surgery',
+};
+
+function openTabQR(tabId) {
+  const url = TAB_QR_URLS[tabId] || APP_URL;
+  var a = document.createElement('a');
+  a.href = url; a.target = '_blank'; a.rel = 'noopener noreferrer';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+}
+
+function initTabQRs() {
+  Object.entries(TAB_QR_URLS).forEach(([tabId, url]) => {
+    const img = document.getElementById('tab-qr-' + tabId);
+    if (img) {
+      img.src = `https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(url)}&margin=2`;
+    }
+  });
+}
+
 // ===== 결과 테이블 렌더링 =====
 function renderResults(coverages) {
   const tbody = document.getElementById('resultBody');
@@ -1204,6 +1234,9 @@ function loadSampleData() {
     });
   });
 })();
+
+// ===== 탭 QR 초기화 =====
+document.addEventListener('DOMContentLoaded', initTabQRs);
 
 // ===== 초기화 =====
 function clearAll() {
