@@ -135,7 +135,7 @@ function renderResults(coverages) {
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td style="color:var(--text-light); font-size:11px; white-space:nowrap; width:4%;">${idx + 1}</td>
-      <td style="width:10%;"><span class="cat-badge cat-${catName}" style="font-size:10px;">${catName}</span></td>
+      <td style="width:10%;"><span class="cat-badge cat-${catName}" style="font-size:10px;">${catName.charAt(0)}</span></td>
       <td style="font-size:14px; font-weight:700; width:55%;">${cov.name}</td>
       <td class="amount-cell" style="white-space:nowrap; width:15%; font-size:13px;">${formatManwon(toManwon(cov.amount))}</td>
       <td class="premium-cell" style="white-space:nowrap; width:16%;">${cov.premium.toLocaleString()}원</td>
@@ -241,22 +241,22 @@ function makePageHeader(icon, title, subtitle) {
   return `
     <div class="page-header" style="padding:0; flex-direction:column;">
 
-      <!-- 행1: 회사명 | 제목+부제+상품명 | 날짜 -->
-      <div style="display:flex; align-items:center; gap:6px; padding:9px 14px 7px; border-bottom:1px solid rgba(255,255,255,0.2);">
-        <div style="font-size:9px; opacity:0.7; white-space:nowrap; line-height:1.3;">현대해상<br>화재보험</div>
+      <!-- 행1: 회사명 | 제목+부제 | 날짜 -->
+      <div style="display:flex; align-items:center; gap:6px; padding:8px 14px 6px; border-bottom:1px solid rgba(255,255,255,0.2);">
+        <div style="font-size:9px; opacity:0.7; white-space:nowrap; line-height:1.4;">현대해상<br>화재보험</div>
         <div style="flex:1; text-align:center; padding:0 4px;">
-          <div style="font-size:15px; font-weight:800; white-space:nowrap;">${icon} ${title}</div>
+          <div style="font-size:15px; font-weight:800;">${icon} ${title}</div>
           <div style="font-size:10px; opacity:0.85;">${subtitle}</div>
-          ${product ? `<div style="font-size:11px; font-weight:700; opacity:0.95; margin-top:3px;">📌 ${product}${payment ? ' · ' + payment : ''}</div>` : ''}
         </div>
         <div style="font-size:10px; opacity:0.8; white-space:nowrap;">${today}</div>
       </div>
 
-      <!-- 행2: 고객 정보 + QR -->
-      <div style="display:flex; align-items:center; justify-content:space-between; padding:9px 14px; gap:10px;">
+      <!-- 행2: 고객정보+상품명(좌) | QR(우) -->
+      <div style="display:flex; align-items:center; padding:9px 14px; gap:10px;">
         <div style="flex:1; min-width:0;">
           <div style="font-size:20px; font-weight:900; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">< ${customer} > 고객님</div>
           ${infoLine ? `<div style="font-size:11px; opacity:0.85; margin-top:3px;">${infoLine}</div>` : ''}
+          ${product ? `<div style="font-size:11px; font-weight:700; opacity:0.95; margin-top:5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">📌 ${product}${payment ? ' · ' + payment : ''}</div>` : ''}
         </div>
         <img src="${qrUrl}" width="72" height="72"
           style="border-radius:6px; background:white; padding:3px; flex-shrink:0; cursor:pointer; display:block;"
@@ -318,17 +318,8 @@ function renderAllinone(coverages) {
     <div class="proposal-page">
       ${makePageHeader('📊', '스마트 제안서 · 올인원', '내 보험 한번에 보여주는 스마트제안서')}
       <div class="page-body">
-        ${product || payment ? `
-          <div style="background:var(--orange-pale); padding:12px 16px; border-radius:10px; margin-bottom:20px; font-size:13px;">
-            <strong>📌 ${product}</strong>${payment ? ' · ' + payment : ''}
-          </div>
-        ` : ''}
-        <div class="highlight-box">
-          <div>
-            <div class="highlight-label">월 납입 보험료 합계</div>
-            <div style="font-size:12px; opacity:0.8; margin-top:2px;">${customer} 고객님 현재 가입 담보 기준</div>
-          </div>
-          <div class="highlight-amount">${Math.round(totalPremium).toLocaleString()}원</div>
+        <div style="display:flex; justify-content:flex-end; align-items:center; margin-bottom:12px; font-size:12px; color:var(--text-light);">
+          <span>월 납입 보험료 합계 <strong style="color:var(--orange); font-size:14px;">${Math.round(totalPremium).toLocaleString()}원</strong></span>
         </div>
         <div class="allinone-grid">${sectionsHtml}</div>
         <div class="notice-box" style="margin-top:16px;">
@@ -602,11 +593,6 @@ function renderDeath(coverages) {
 function renderOnePager(coverages) {
   const container = document.getElementById('onepagerContent');
   const customer = document.getElementById('customerName').value.trim() || '고객';
-  const planner = document.getElementById('plannerName').value.trim() || '';
-  const branch = document.getElementById('branchName').value.trim() || '';
-  const product = document.getElementById('productName').value.trim() || '';
-  const payment = document.getElementById('paymentInfo').value.trim() || '';
-  const today = new Date().toLocaleDateString('ko-KR');
 
   const cancerItems = getCatCoverages(coverages, '암');
   const brainItems = getCatCoverages(coverages, '뇌');
@@ -645,27 +631,10 @@ function renderOnePager(coverages) {
 
   container.innerHTML = `
     <div class="proposal-page">
-      <div class="page-header">
-        <div class="page-header-left">
-          <h1>📄 스마트 제안서 · 한장 요약</h1>
-          <div class="subtitle">암 · 뇌 · 심장 핵심 보장 한눈에 보기</div>
-          <div style="margin-top:6px; font-size:11px; opacity:0.8;">※ 본 자료는 보험 상품을 쉽게 이해하기 위해 제작된 것으로 모집용으로 사용 불가</div>
-        </div>
-        <div class="page-header-right">
-          <div class="customer-name">< ${customer} > 고객님</div>
-          <div>${branch ? branch + ' ' : ''}${planner ? planner + ' 플래너' : ''}</div>
-          <div style="margin-top:4px; font-size:11px; opacity:0.8;">${today}</div>
-        </div>
-      </div>
+      ${makePageHeader('📄', '스마트 제안서 · 한장 요약', '암 · 뇌 · 심장 핵심 보장 한눈에 보기')}
       <div class="page-body">
-        ${product ? `<div style="background:var(--orange-pale); padding:10px 14px; border-radius:8px; margin-bottom:14px; font-size:13px; font-weight:700;">📌 ${product}${payment ? ' · ' + payment : ''}</div>` : ''}
-
-        <div class="highlight-box" style="margin-bottom:16px;">
-          <div>
-            <div class="highlight-label">월 납입 보험료 합계</div>
-            <div style="font-size:12px; opacity:0.8; margin-top:2px;">전체 담보 기준 (총 ${coverages.length}개)</div>
-          </div>
-          <div class="highlight-amount">${Math.round(totalPremium).toLocaleString()}원</div>
+        <div style="display:flex; justify-content:flex-end; margin-bottom:12px; font-size:12px; color:var(--text-light);">
+          <span>월 납입 보험료 합계 <strong style="color:var(--orange); font-size:14px;">${Math.round(totalPremium).toLocaleString()}원</strong> · 총 ${coverages.length}개 담보</span>
         </div>
 
         <div style="display:flex; gap:14px; flex-wrap:wrap; margin-bottom:16px;">
