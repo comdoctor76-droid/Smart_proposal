@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>스마트 제안서 v0.04 | 현대해상화재보험</title>
+<title>스마트 제안서 v0.05 | 현대해상화재보험</title>
 <!-- QR코드 API용 캐시 허용 -->
 <meta http-equiv="Content-Security-Policy" content="img-src * data:;">
 <style>
@@ -557,9 +557,47 @@ body { font-family: 'Malgun Gothic', '맑은 고딕', -apple-system, sans-serif;
 .premium-item.main { border-color: var(--orange); background: var(--orange-pale); }
 .premium-item-label { font-size: 11px; color: var(--text-light); font-weight: 600; }
 .premium-item-value { font-size: 18px; font-weight: 800; color: var(--orange); margin-top: 4px; }
+
+/* ===== 플로팅 새로고침 버튼 ===== */
+#floatRefreshBtn {
+  position: fixed;
+  left: 16px;
+  top: 120px;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--orange), var(--orange-dark));
+  color: white;
+  font-size: 20px;
+  border: none;
+  cursor: grab;
+  z-index: 9997;
+  box-shadow: 0 4px 16px rgba(240,90,34,0.45);
+  transition: box-shadow 0.2s, transform 0.2s;
+  user-select: none;
+  -webkit-user-select: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  touch-action: none;
+}
+#floatRefreshBtn:active { cursor: grabbing; box-shadow: 0 2px 8px rgba(240,90,34,0.3); transform: scale(0.95); }
+#floatRefreshBtn.snapping { transition: left 0.25s ease, top 0.25s ease, right 0.25s ease, bottom 0.25s ease; }
+
+/* ===== 모바일 헤더 간소화 ===== */
+@media (max-width: 600px) {
+  #headerPlanner { display: none !important; }
+  .header-info { gap: 8px; }
+  .header-title { font-size: 16px; }
+  .header-sub { font-size: 10px; }
+  .logo-badge { width: 34px; height: 34px; font-size: 18px; }
+}
 </style>
 </head>
 <body>
+
+<!-- 플로팅 새로고침 버튼 -->
+<button id="floatRefreshBtn" title="새로고침">🔄</button>
 
 <!-- 로딩 오버레이 -->
 <div class="loading-overlay" id="loadingOverlay">
@@ -574,7 +612,7 @@ body { font-family: 'Malgun Gothic', '맑은 고딕', -apple-system, sans-serif;
       <div class="logo-badge">🛡️</div>
       <div>
         <div class="header-title">스마트 제안서</div>
-        <div class="header-sub">현대해상화재보험 · Smart Proposal System <span style="background:rgba(255,255,255,0.25); padding:1px 7px; border-radius:8px; font-size:10px; margin-left:6px; letter-spacing:0.5px;">v0.04</span></div>
+        <div class="header-sub">현대해상화재보험 · Smart Proposal System <span style="background:rgba(255,255,255,0.25); padding:1px 7px; border-radius:8px; font-size:10px; margin-left:6px; letter-spacing:0.5px;">v0.05</span></div>
       </div>
     </div>
     <div class="header-info">

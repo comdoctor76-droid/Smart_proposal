@@ -1119,6 +1119,92 @@ function loadSampleData() {
   alert('샘플 데이터가 입력되었습니다.\n"⚡ 데이터 분석하기" 버튼을 클릭하세요.');
 }
 
+// ===== 플로팅 새로고침 버튼 드래그 + 코너 스냅 =====
+(function initFloatBtn() {
+  document.addEventListener('DOMContentLoaded', () => {
+    const btn = document.getElementById('floatRefreshBtn');
+    if (!btn) return;
+
+    let dragging = false;
+    let moved = false;
+    let startX = 0, startY = 0;
+    let curLeft = 16, curTop = 120;
+
+    // 4개 코너 위치 계산 (헤더+탭바 높이 고려)
+    function snapCorners() {
+      const W = window.innerWidth;
+      const H = window.innerHeight;
+      const bw = btn.offsetWidth + 16;
+      const bh = btn.offsetHeight + 16;
+      const headerH = 120; // header + nav 높이
+      return [
+        { left: 16,      top: headerH,       right: 'auto', bottom: 'auto' }, // 좌상
+        { left: W - bw,  top: headerH,       right: 'auto', bottom: 'auto' }, // 우상
+        { left: 16,      top: H - bh,        right: 'auto', bottom: 'auto' }, // 좌하
+        { left: W - bw,  top: H - bh,        right: 'auto', bottom: 'auto' }, // 우하
+      ];
+    }
+
+    function nearestCorner(cx, cy) {
+      const corners = snapCorners();
+      let best = corners[0], bestDist = Infinity;
+      corners.forEach(c => {
+        const d = Math.hypot(cx - c.left, cy - c.top);
+        if (d < bestDist) { bestDist = d; best = c; }
+      });
+      return best;
+    }
+
+    function applyPos(pos, animate) {
+      if (animate) btn.style.transition = 'left 0.28s cubic-bezier(.4,0,.2,1), top 0.28s cubic-bezier(.4,0,.2,1)';
+      else btn.style.transition = 'none';
+      btn.style.left = pos.left + 'px';
+      btn.style.top  = pos.top  + 'px';
+      btn.style.right  = 'auto';
+      btn.style.bottom = 'auto';
+      curLeft = pos.left; curTop = pos.top;
+    }
+
+    function onStart(clientX, clientY) {
+      dragging = true; moved = false;
+      const rect = btn.getBoundingClientRect();
+      startX = clientX - rect.left;
+      startY = clientY - rect.top;
+      btn.style.transition = 'none';
+    }
+
+    function onMove(clientX, clientY) {
+      if (!dragging) return;
+      const nx = clientX - startX;
+      const ny = clientY - startY;
+      if (Math.abs(nx - curLeft) > 4 || Math.abs(ny - curTop) > 4) moved = true;
+      const W = window.innerWidth, H = window.innerHeight;
+      curLeft = Math.max(0, Math.min(W - btn.offsetWidth, nx));
+      curTop  = Math.max(0, Math.min(H - btn.offsetHeight, ny));
+      btn.style.left = curLeft + 'px';
+      btn.style.top  = curTop  + 'px';
+      btn.style.right = 'auto';
+      btn.style.bottom = 'auto';
+    }
+
+    function onEnd() {
+      if (!dragging) return;
+      dragging = false;
+      if (!moved) { location.reload(); return; }
+      const pos = nearestCorner(curLeft + btn.offsetWidth / 2, curTop + btn.offsetHeight / 2);
+      applyPos(pos, true);
+    }
+
+    btn.addEventListener('mousedown',  e => { e.preventDefault(); onStart(e.clientX, e.clientY); });
+    document.addEventListener('mousemove', e => onMove(e.clientX, e.clientY));
+    document.addEventListener('mouseup',   () => onEnd());
+
+    btn.addEventListener('touchstart', e => { const t = e.touches[0]; onStart(t.clientX, t.clientY); }, { passive: true });
+    document.addEventListener('touchmove',  e => { if (dragging) { e.preventDefault(); const t = e.touches[0]; onMove(t.clientX, t.clientY); } }, { passive: false });
+    document.addEventListener('touchend',   () => onEnd());
+  });
+})();
+
 // ===== 초기화 =====
 function clearAll() {
   if (!confirm('모든 데이터를 초기화하시겠습니까?')) return;
