@@ -1196,6 +1196,25 @@ function loadSampleData() {
   alert('샘플 데이터가 입력되었습니다.\n"⚡ 데이터 분석하기" 버튼을 클릭하세요.');
 }
 
+// ===== 캐시 완전 초기화 후 새로고침 =====
+async function hardReload() {
+  try {
+    // 서비스 워커 해제
+    if ('serviceWorker' in navigator) {
+      const regs = await navigator.serviceWorker.getRegistrations();
+      await Promise.all(regs.map(r => r.unregister()));
+    }
+    // Cache Storage 전체 삭제
+    if ('caches' in window) {
+      const keys = await caches.keys();
+      await Promise.all(keys.map(k => caches.delete(k)));
+    }
+  } catch (e) { /* 무시 */ }
+  // 쿼리스트링으로 캐시 우회 강제 리로드
+  const url = location.href.split('?')[0] + '?_r=' + Date.now();
+  location.replace(url);
+}
+
 // ===== 플로팅 새로고침 버튼 드래그 + 코너 스냅 =====
 (function initFloatBtn() {
   document.addEventListener('DOMContentLoaded', () => {
@@ -1267,7 +1286,7 @@ function loadSampleData() {
     function onEnd() {
       if (!dragging) return;
       dragging = false;
-      if (!moved) { location.reload(); return; }
+      if (!moved) { hardReload(); return; }
       const pos = nearestCorner(curLeft + btn.offsetWidth / 2, curTop + btn.offsetHeight / 2);
       applyPos(pos, true);
     }
