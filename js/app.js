@@ -126,6 +126,7 @@ const TAB_QR_URLS = {
   heart:    APP_URL + '?tab=heart',
   death:    APP_URL + '?tab=death',
   onepager: APP_URL + '?tab=onepager',
+  injury:   APP_URL + '?tab=injury',
   driver:   APP_URL + '?tab=driver',
   daily:    APP_URL + '?tab=daily',
   woman:    APP_URL + '?tab=woman',
@@ -302,6 +303,78 @@ function makeCoverageList(items, titleClass = '') {
   `).join('');
 }
 
+// ===== 접이식 제안서 컬럼 =====
+let _colSec = 0;
+
+function _colItemsHtml(items) {
+  if (!items || items.length === 0)
+    return '<div style="padding:10px 16px;color:#999;font-size:12px;">해당 담보 없음</div>';
+  return items.map(c => `
+    <div style="display:flex;align-items:center;padding:7px 14px;border-bottom:1px solid #f5f5f5;gap:8px;">
+      <span style="flex:1;font-size:12px;">${c.cat ? c.cat.label : c.name}</span>
+      <span style="font-weight:700;color:var(--orange);white-space:nowrap;font-size:12px;">${formatManwon(toManwon(c.amount))}</span>
+      <span style="color:#999;white-space:nowrap;font-size:11px;">${c.premium.toLocaleString()}원</span>
+    </div>`).join('');
+}
+
+function makeCollapsibleCol(num, title, items, hClass, totalOverride) {
+  const id = 'cs' + (++_colSec);
+  const tot = totalOverride !== undefined ? totalOverride
+    : (sumAmounts(items) > 0 ? formatManwon(toManwon(sumAmounts(items))) : items.length + '개');
+  return `
+    <div class="proposal-col">
+      <div class="col-header ${hClass||''}" onclick="toggleColSection('${id}')"
+           style="cursor:pointer;justify-content:space-between;user-select:none;">
+        <span>${num} ${title} 총 ${tot}</span>
+        <span id="${id}_a" style="font-size:10px;transition:transform 0.25s;display:inline-block;">▼</span>
+      </div>
+      <div id="${id}" style="display:none;">${_colItemsHtml(items)}</div>
+    </div>`;
+}
+
+function makeCollapsibleColGroups(num, title, groups, allItems, hClass, totalOverride) {
+  const id = 'cs' + (++_colSec);
+  const tot = totalOverride !== undefined ? totalOverride
+    : (sumAmounts(allItems) > 0 ? formatManwon(toManwon(sumAmounts(allItems))) : allItems.length + '개');
+  let rows = '';
+  if (Object.keys(groups).length === 0) {
+    rows = '<div style="padding:10px 14px;color:#999;font-size:12px;">해당 담보 없음</div>';
+  } else {
+    Object.entries(groups).forEach(([grp, items]) => {
+      rows += `<div class="coverage-group-title">${grp}</div>`;
+      items.forEach(c => {
+        rows += `<div style="display:flex;align-items:center;padding:7px 14px;border-bottom:1px solid #f5f5f5;gap:8px;">
+          <span style="flex:1;font-size:12px;">${c.cat ? c.cat.label : c.name}</span>
+          <span style="font-weight:700;color:var(--orange);white-space:nowrap;font-size:12px;">${formatManwon(toManwon(c.amount))}</span>
+          <span style="color:#999;white-space:nowrap;font-size:11px;">${c.premium.toLocaleString()}원</span>
+        </div>`;
+      });
+    });
+  }
+  return `
+    <div class="proposal-col">
+      <div class="col-header ${hClass||''}" onclick="toggleColSection('${id}')"
+           style="cursor:pointer;justify-content:space-between;user-select:none;">
+        <span>${num} ${title} 총 ${tot}</span>
+        <span id="${id}_a" style="font-size:10px;transition:transform 0.25s;display:inline-block;">▼</span>
+      </div>
+      <div id="${id}" style="display:none;">${rows}</div>
+    </div>`;
+}
+
+function toggleColSection(id) {
+  const el = document.getElementById(id);
+  const ar = document.getElementById(id + '_a');
+  if (!el) return;
+  const open = el.style.display !== 'none';
+  el.style.display = open ? 'none' : 'block';
+  if (ar) ar.style.transform = open ? '' : 'rotate(180deg)';
+  if (!open) {
+    el.style.animation = 'none';
+    requestAnimationFrame(() => { el.style.animation = 'slideDown 0.25s ease'; });
+  }
+}
+
 // ===== 페이지 헤더 HTML =====
 function makePageHeader(icon, title, subtitle) {
   const customer = document.getElementById('customerName').value.trim() || '고객';
@@ -351,8 +424,10 @@ function makePageHeader(icon, title, subtitle) {
 
 // ===== 전체 섹션 렌더링 =====
 function renderAllSections(coverages) {
+  _colSec = 0;
   renderAllinone(coverages);
   renderDeath(coverages);
+  renderInjury(coverages);
   renderOnePager(coverages);
   renderCancer(coverages);
   renderBrain(coverages);
@@ -442,30 +517,9 @@ function renderCancer(coverages) {
           ⚠️ 암담보 특약은 <strong>가입 후 90일 면책기간</strong>이 적용되며, 가입 후 1년 이내 진단 시 50% 감액 조건이 있습니다.
         </div>
         <div class="proposal-grid">
-          <div class="proposal-col">
-            <div class="col-header">① 진단 보장</div>
-            ${renderGroupItems(diagGroups)}
-            <div class="total-bar">
-              <span class="total-label">진단 담보 합계</span>
-              <span class="total-amount">${formatManwon(toManwon(sumAmounts(diagItems)))}</span>
-            </div>
-          </div>
-          <div class="proposal-col">
-            <div class="col-header blue">② 최신 항암치료 보장</div>
-            ${renderGroupItems(treatGroups)}
-            <div class="total-bar">
-              <span class="total-label">치료 담보 수</span>
-              <span class="total-amount">${treatItems.length}개</span>
-            </div>
-          </div>
-          <div class="proposal-col">
-            <div class="col-header purple">③ 수술 보장</div>
-            ${renderGroupItems(surgGroups)}
-            <div class="total-bar">
-              <span class="total-label">수술 담보 합계</span>
-              <span class="total-amount">${formatManwon(toManwon(sumAmounts(surgItems)))}</span>
-            </div>
-          </div>
+          ${makeCollapsibleColGroups('①', '진단 보장', diagGroups, diagItems, '', formatManwon(toManwon(sumAmounts(diagItems))))}
+          ${makeCollapsibleColGroups('②', '최신 항암치료 보장', treatGroups, treatItems, 'blue', treatItems.length + '개')}
+          ${makeCollapsibleColGroups('③', '수술 보장', surgGroups, surgItems, 'purple', formatManwon(toManwon(sumAmounts(surgItems))))}
         </div>
         <div class="section-divider">암 보장 상세 내역</div>
         ${renderDetailTable(items)}
@@ -510,30 +564,9 @@ function renderBrain(coverages) {
           `).join('')}
         </div>
         <div class="proposal-grid">
-          <div class="proposal-col">
-            <div class="col-header">① 진단 보장</div>
-            ${makeCoverageList(diagItems)}
-            <div class="total-bar">
-              <span class="total-label">진단 합계</span>
-              <span class="total-amount">${formatManwon(toManwon(sumAmounts(diagItems)))}</span>
-            </div>
-          </div>
-          <div class="proposal-col">
-            <div class="col-header blue">② 수술/치료 보장</div>
-            ${makeCoverageList(surgItems)}
-            <div class="total-bar">
-              <span class="total-label">수술/치료 합계</span>
-              <span class="total-amount">${formatManwon(toManwon(sumAmounts(surgItems)))}</span>
-            </div>
-          </div>
-          <div class="proposal-col">
-            <div class="col-header purple">③ 검사 보장</div>
-            ${makeCoverageList(examItems)}
-            <div class="total-bar">
-              <span class="total-label">검사 담보 수</span>
-              <span class="total-amount">${examItems.length}개</span>
-            </div>
-          </div>
+          ${makeCollapsibleCol('①', '진단 보장', diagItems, '', formatManwon(toManwon(sumAmounts(diagItems))))}
+          ${makeCollapsibleCol('②', '수술/치료 보장', surgItems, 'blue', formatManwon(toManwon(sumAmounts(surgItems))))}
+          ${makeCollapsibleCol('③', '검사 보장', examItems, 'purple', examItems.length + '개')}
         </div>
         <div class="section-divider">뇌 보장 상세 내역</div>
         ${renderDetailTable(items)}
@@ -577,34 +610,16 @@ function renderHeart(coverages) {
           }).join('')}
         </div>
         <div class="proposal-grid">
+          ${makeCollapsibleCol('①', '진단 보장', diagItems, '', formatManwon(toManwon(sumAmounts(diagItems))))}
+          ${makeCollapsibleCol('②', '수술/치료 보장', surgItems, 'blue', formatManwon(toManwon(sumAmounts(surgItems))))}
           <div class="proposal-col">
-            <div class="col-header">① 진단 보장</div>
-            ${makeCoverageList(diagItems)}
-            <div class="total-bar">
-              <span class="total-label">진단 합계</span>
-              <span class="total-amount">${formatManwon(toManwon(sumAmounts(diagItems)))}</span>
-            </div>
-          </div>
-          <div class="proposal-col">
-            <div class="col-header blue">② 수술/치료 보장</div>
-            ${makeCoverageList(surgItems)}
-            <div class="total-bar">
-              <span class="total-label">수술 합계</span>
-              <span class="total-amount">${formatManwon(toManwon(sumAmounts(surgItems)))}</span>
-            </div>
-          </div>
-          <div class="proposal-col">
-            <div class="col-header purple">③ 심장 보장 요약</div>
-            <div style="padding:16px;">
-              <div style="text-align:center; margin-bottom:16px;">
-                <div style="font-size:48px; margin-bottom:8px;">❤️</div>
-                <div style="font-size:13px; color:var(--text-light);">전체 심장 담보</div>
-                <div style="font-size:32px; font-weight:800; color:var(--orange);">${formatManwon(toManwon(sumAmounts(items)))}</div>
-              </div>
-              <div style="font-size:12px; color:var(--text-light); line-height:1.8;">
-                • 진단 담보: ${diagItems.length}개<br>
-                • 수술/치료 담보: ${surgItems.length}개<br>
-                • 월 보험료: ${Math.round(sumPremiums(items)).toLocaleString()}원
+            <div class="col-header purple">③ 보장 요약</div>
+            <div style="padding:14px;text-align:center;">
+              <div style="font-size:40px;margin-bottom:6px;">❤️</div>
+              <div style="font-size:28px;font-weight:800;color:var(--orange);">${formatManwon(toManwon(sumAmounts(items)))}</div>
+              <div style="font-size:11px;color:var(--text-light);margin-top:8px;line-height:1.8;">
+                진단 ${diagItems.length}개 · 수술/치료 ${surgItems.length}개<br>
+                월 보험료 ${Math.round(sumPremiums(items)).toLocaleString()}원
               </div>
             </div>
           </div>
@@ -619,66 +634,72 @@ function renderHeart(coverages) {
 // ===== 사망·장해 보장 렌더링 =====
 function renderDeath(coverages) {
   const container = document.getElementById('deathContent');
-  const items = getCatCoverages(coverages, '상해');
-
-  const allDeathItems = items.filter(c => c.cat.sub === '사망장해');
-  const deathOnly = allDeathItems.filter(c => c.name.includes('사망') && !c.name.includes('후유장해'));
-  const disabilityOnly = allDeathItems.filter(c => c.name.includes('후유장해') || c.name.includes('장해'));
-  const fracItems = items.filter(c => c.cat.sub === '골절화상');
-  const rehabItems = items.filter(c => c.cat.sub === '재활');
-
-  const totalDeath = sumAmounts(deathOnly);
-  const totalDisability = sumAmounts(disabilityOnly);
-  const totalAll = sumAmounts(allDeathItems);
+  const allInjury = getCatCoverages(coverages, '상해');
+  const deathItems = allInjury.filter(c => c.cat.sub === '사망장해');
+  const deathOnly = deathItems.filter(c => c.name.includes('사망') && !c.name.includes('후유장해'));
+  const disabilityOnly = deathItems.filter(c => c.name.includes('후유장해') || c.name.includes('장해'));
 
   container.innerHTML = `
     <div class="proposal-page">
-      ${makePageHeader('🛡️', '사망·장해 보장 한번에 보여주는 스마트제안서', '상해사망·후유장해·골절·화상 보장')}
+      ${makePageHeader('🛡️', '사망·장해 보장 한번에 보여주는 스마트제안서', '상해사망·후유장해 보장')}
       <div class="page-body">
         <div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;">
           <div class="highlight-box" style="flex:1;min-width:140px;">
             <div>
-              <div class="highlight-label">사망 보장 합계</div>
-              <div style="font-size:11px; opacity:0.8; margin-top:2px;">사망 담보 기준</div>
+              <div class="highlight-label">상해사망</div>
+              <div style="font-size:11px;opacity:0.8;margin-top:2px;">상해사망 담보 기준</div>
             </div>
-            <div class="highlight-amount">${formatManwon(toManwon(totalDeath))}</div>
+            <div class="highlight-amount">${formatManwon(toManwon(sumAmounts(deathOnly)))}</div>
           </div>
-          <div class="highlight-box" style="flex:1;min-width:140px;background:linear-gradient(135deg,#3300CC,#1A0088);color:white;">
+          <div class="highlight-box" style="flex:1;min-width:140px;background:linear-gradient(135deg,#3300CC,#1A0088);">
             <div>
-              <div class="highlight-label" style="color:rgba(255,255,255,0.8);">후유장해 보장 합계</div>
-              <div style="font-size:11px; opacity:0.8; margin-top:2px;">후유장해 담보 기준</div>
+              <div class="highlight-label">상해후유</div>
+              <div style="font-size:11px;opacity:0.8;margin-top:2px;">상해후유장해 담보 기준</div>
             </div>
-            <div class="highlight-amount">${formatManwon(toManwon(totalDisability))}</div>
+            <div class="highlight-amount">${formatManwon(toManwon(sumAmounts(disabilityOnly)))}</div>
           </div>
         </div>
         <div class="proposal-grid">
-          <div class="proposal-col">
-            <div class="col-header" style="background:var(--orange-pale); color:var(--orange); border-bottom-color:var(--orange);">① 사망 보장</div>
-            ${makeCoverageList(deathOnly)}
-            <div class="total-bar">
-              <span class="total-label">합계</span>
-              <span class="total-amount">${formatManwon(toManwon(totalDeath))}</span>
-            </div>
-          </div>
-          <div class="proposal-col">
-            <div class="col-header" style="background:#f0f0ff; color:#3300CC; border-bottom:2px solid #3300CC;">② 후유장해 보장</div>
-            ${makeCoverageList(disabilityOnly)}
-            <div class="total-bar">
-              <span class="total-label">합계</span>
-              <span class="total-amount">${formatManwon(toManwon(totalDisability))}</span>
-            </div>
-          </div>
-          <div class="proposal-col">
-            <div class="col-header blue">③ 골절·화상 보장</div>
-            ${makeCoverageList(fracItems)}
-            <div class="total-bar">
-              <span class="total-label">합계</span>
-              <span class="total-amount">${formatManwon(toManwon(sumAmounts(fracItems)))}</span>
-            </div>
-          </div>
+          ${makeCollapsibleCol('①', '상해사망 보장', deathOnly, '', formatManwon(toManwon(sumAmounts(deathOnly))))}
+          ${makeCollapsibleCol('②', '상해후유 보장', disabilityOnly, 'blue', formatManwon(toManwon(sumAmounts(disabilityOnly))))}
         </div>
         <div class="section-divider">사망·장해 보장 상세 내역</div>
-        ${renderDetailTable(items)}
+        ${renderDetailTable(deathItems)}
+      </div>
+    </div>
+  `;
+}
+
+// ===== 상해 보장 렌더링 (골절·화상·재활) =====
+function renderInjury(coverages) {
+  const container = document.getElementById('injuryContent');
+  if (!container) return;
+  const allInjury = getCatCoverages(coverages, '상해');
+  const fracItems  = allInjury.filter(c => c.cat.sub === '골절화상');
+  const rehabItems = allInjury.filter(c => c.cat.sub === '재활');
+  const otherItems = allInjury.filter(c => !['사망장해','골절화상','재활'].includes(c.cat.sub));
+  const totalItems = [...fracItems, ...rehabItems, ...otherItems];
+
+  if (totalItems.length === 0) {
+    container.innerHTML = `<div class="card"><div class="empty-state"><div class="empty-state-icon">🦴</div><h3>상해 담보 없음</h3><p>골절·화상·재활 관련 담보가 없습니다.</p></div></div>`;
+    return;
+  }
+
+  container.innerHTML = `
+    <div class="proposal-page">
+      ${makePageHeader('🦴', '상해 보장 한번에 보여주는 스마트제안서', '골절·화상·재활 보장')}
+      <div class="page-body">
+        <div class="highlight-box">
+          <div><div class="highlight-label">상해 보장 합계</div></div>
+          <div class="highlight-amount">${formatManwon(toManwon(sumAmounts(totalItems)))}</div>
+        </div>
+        <div class="proposal-grid">
+          ${makeCollapsibleCol('①', '골절·화상 보장', fracItems, '', formatManwon(toManwon(sumAmounts(fracItems))))}
+          ${makeCollapsibleCol('②', '재활 보장', rehabItems, 'blue', rehabItems.length + '개')}
+          ${otherItems.length > 0 ? makeCollapsibleCol('③', '기타 상해 보장', otherItems, 'purple', formatManwon(toManwon(sumAmounts(otherItems)))) : ''}
+        </div>
+        <div class="section-divider">상해 보장 상세 내역</div>
+        ${renderDetailTable(totalItems)}
       </div>
     </div>
   `;
@@ -844,30 +865,9 @@ function renderWoman(coverages) {
         </div>
 
         <div class="proposal-grid">
-          <div class="proposal-col">
-            <div class="col-header" style="background:#FFE0EE; color:#CC0066; border-bottom-color:#CC0066;">① 여성 특정 수술</div>
-            ${makeCoverageList(womanSurgItems.length > 0 ? womanSurgItems : benignWoman)}
-            <div class="total-bar">
-              <span class="total-label">합계</span>
-              <span class="total-amount">${formatManwon(toManwon(sumAmounts(womanSurgItems.length > 0 ? womanSurgItems : benignWoman)))}</span>
-            </div>
-          </div>
-          <div class="proposal-col">
-            <div class="col-header blue">② 5대기관·주요수술</div>
-            ${makeCoverageList(mainItems)}
-            <div class="total-bar">
-              <span class="total-label">합계</span>
-              <span class="total-amount">${formatManwon(toManwon(sumAmounts(mainItems)))}</span>
-            </div>
-          </div>
-          <div class="proposal-col">
-            <div class="col-header purple">③ 특수·기타 수술</div>
-            ${makeCoverageList(specialItems)}
-            <div class="total-bar">
-              <span class="total-label">담보 수</span>
-              <span class="total-amount">${specialItems.length}개</span>
-            </div>
-          </div>
+          ${makeCollapsibleCol('①', '여성 특정 수술', womanSurgItems.length > 0 ? womanSurgItems : benignWoman, '', formatManwon(toManwon(sumAmounts(womanSurgItems.length > 0 ? womanSurgItems : benignWoman))))}
+          ${makeCollapsibleCol('②', '5대기관·주요수술', mainItems, 'blue', formatManwon(toManwon(sumAmounts(mainItems))))}
+          ${makeCollapsibleCol('③', '특수·기타 수술', specialItems, 'purple', specialItems.length + '개')}
         </div>
         <div class="section-divider">수술(여) 보장 상세 내역</div>
         ${renderDetailTable([...womanSurgItems, ...benignWoman, ...mainItems, ...specialItems])}
@@ -936,30 +936,9 @@ function renderDaily(coverages) {
           <div class="highlight-amount">${maxDaily}만원/일</div>
         </div>
         <div class="proposal-grid">
-          <div class="proposal-col">
-            <div class="col-header">① 일반 입원일당</div>
-            ${makeCoverageList(diseaseItems)}
-            <div class="total-bar">
-              <span class="total-label">담보 수</span>
-              <span class="total-amount">${diseaseItems.length}개</span>
-            </div>
-          </div>
-          <div class="proposal-col">
-            <div class="col-header blue">② 종합/상급병원 일당</div>
-            ${makeCoverageList(hospitalItems)}
-            <div class="total-bar">
-              <span class="total-label">담보 수</span>
-              <span class="total-amount">${hospitalItems.length}개</span>
-            </div>
-          </div>
-          <div class="proposal-col">
-            <div class="col-header purple">③ 간호간병 & 기타</div>
-            ${makeCoverageList([...nursingItems, ...otherItems])}
-            <div class="total-bar">
-              <span class="total-label">담보 수</span>
-              <span class="total-amount">${(nursingItems.length + otherItems.length)}개</span>
-            </div>
-          </div>
+          ${makeCollapsibleCol('①', '일반 입원일당', diseaseItems, '', diseaseItems.length + '개')}
+          ${makeCollapsibleCol('②', '종합/상급병원 일당', hospitalItems, 'blue', hospitalItems.length + '개')}
+          ${makeCollapsibleCol('③', '간호간병 & 기타', [...nursingItems, ...otherItems], 'purple', (nursingItems.length + otherItems.length) + '개')}
         </div>
         <div class="section-divider">입원일당 상세 내역</div>
         ${renderDetailTable(items)}
@@ -1007,30 +986,9 @@ function renderSurgery(coverages) {
           `).join('<div class="flow-arrow">|</div>')}
         </div>
         <div class="proposal-grid">
-          <div class="proposal-col">
-            <div class="col-header">① 5대기관·주요수술</div>
-            ${makeCoverageList([...mainItems, ...diseaseItems])}
-            <div class="total-bar">
-              <span class="total-label">합계</span>
-              <span class="total-amount">${formatManwon(toManwon(sumAmounts([...mainItems, ...diseaseItems])))}</span>
-            </div>
-          </div>
-          <div class="proposal-col">
-            <div class="col-header blue">② 남성 특정 수술</div>
-            ${makeCoverageList(maleItems)}
-            <div class="total-bar">
-              <span class="total-label">합계</span>
-              <span class="total-amount">${formatManwon(toManwon(sumAmounts(maleItems)))}</span>
-            </div>
-          </div>
-          <div class="proposal-col">
-            <div class="col-header purple">③ 특수·기타 수술</div>
-            ${makeCoverageList([...specialItems, ...rehabItems])}
-            <div class="total-bar">
-              <span class="total-label">담보 수</span>
-              <span class="total-amount">${(specialItems.length + rehabItems.length)}개</span>
-            </div>
-          </div>
+          ${makeCollapsibleCol('①', '5대기관·주요수술', [...mainItems, ...diseaseItems], '', formatManwon(toManwon(sumAmounts([...mainItems, ...diseaseItems]))))}
+          ${makeCollapsibleCol('②', '남성 특정 수술', maleItems, 'blue', formatManwon(toManwon(sumAmounts(maleItems))))}
+          ${makeCollapsibleCol('③', '특수·기타 수술', [...specialItems, ...rehabItems], 'purple', (specialItems.length + rehabItems.length) + '개')}
         </div>
         <div class="section-divider">수술 보장 상세 내역</div>
         ${renderDetailTable(items)}
@@ -1329,7 +1287,7 @@ function clearAll() {
   document.getElementById('resultCard').style.display = 'none';
   document.getElementById('summaryCard').style.display = 'none';
   parsedCoverages = [];
-  ['allinone', 'death', 'onepager', 'cancer', 'brain', 'heart', 'woman', 'driver', 'daily', 'surgery'].forEach(section => {
+  ['allinone', 'death', 'injury', 'onepager', 'cancer', 'brain', 'heart', 'woman', 'driver', 'daily', 'surgery'].forEach(section => {
     const el = document.getElementById(section + 'Content');
     if (el) el.innerHTML = `<div class="empty-state"><div class="empty-state-icon">📊</div><h3>데이터를 먼저 입력해주세요</h3></div>`;
   });

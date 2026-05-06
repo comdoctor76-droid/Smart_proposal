@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>스마트 제안서 v0.11 | 현대해상화재보험</title>
+<title>스마트 제안서 v0.12 | 현대해상화재보험</title>
 <!-- QR코드 API용 캐시 허용 -->
 <meta http-equiv="Content-Security-Policy" content="img-src * data:;">
 <style>
@@ -631,7 +631,7 @@ body { font-family: 'Malgun Gothic', '맑은 고딕', -apple-system, sans-serif;
       <div class="logo-badge">🛡️</div>
       <div>
         <div class="header-title">스마트 제안서</div>
-        <div class="header-sub">현대해상화재보험 · Smart Proposal System <span style="background:rgba(255,255,255,0.25); padding:1px 7px; border-radius:8px; font-size:10px; margin-left:6px; letter-spacing:0.5px;">v0.11</span></div>
+        <div class="header-sub">현대해상화재보험 · Smart Proposal System <span style="background:rgba(255,255,255,0.25); padding:1px 7px; border-radius:8px; font-size:10px; margin-left:6px; letter-spacing:0.5px;">v0.12</span></div>
       </div>
     </div>
     <div class="header-info">
@@ -670,6 +670,9 @@ body { font-family: 'Malgun Gothic', '맑은 고딕', -apple-system, sans-serif;
     </button>
     <button class="tab-btn" onclick="switchTab('surgery')" id="tab-surgery">
       <span class="tab-icon">⚕️</span> 수술(남)
+    </button>
+    <button class="tab-btn" onclick="switchTab('injury')" id="tab-injury">
+      <span class="tab-icon">🦴</span> 상해
     </button>
     <button class="tab-btn" onclick="switchTab('driver')" id="tab-driver">
       <span class="tab-icon">🚗</span> 운전자
@@ -892,6 +895,22 @@ body { font-family: 'Malgun Gothic', '맑은 고딕', -apple-system, sans-serif;
   </div>
   <div id="onepagerContent">
     <div class="empty-state"><div class="empty-state-icon">📄</div><h3>데이터를 먼저 입력해주세요</h3></div>
+  </div>
+</div>
+
+<!-- ===== 상해 보장 탭 ===== -->
+<div class="tab-content" id="content-injury">
+  <div class="print-controls">
+    <h3>🦴 상해 보장 제안서</h3>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <img id="tab-qr-injury" src="" width="48" height="48" style="border-radius:4px;cursor:pointer;background:white;padding:2px;border:1px solid #ddd;" alt="QR" onclick="openTabQR('injury')" onerror="this.style.display='none'">
+      <div class="btn-group">
+        <button class="btn btn-primary" onclick="printSection('injury')">🖨️ 인쇄</button>
+      </div>
+    </div>
+  </div>
+  <div id="injuryContent">
+    <div class="empty-state"><div class="empty-state-icon">🦴</div><h3>데이터를 먼저 입력해주세요</h3></div>
   </div>
 </div>
 
