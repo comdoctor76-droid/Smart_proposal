@@ -115,6 +115,9 @@ const CAT_ICONS = {
   '납입면제': '✅', '기타': '📋'
 };
 
+// QR코드 URL (앱 주소)
+const APP_URL = 'https://comdoctor76-droid.github.io/Smart_proposal/';
+
 // ===== 결과 테이블 렌더링 =====
 function renderResults(coverages) {
   const tbody = document.getElementById('resultBody');
@@ -129,14 +132,13 @@ function renderResults(coverages) {
     catCounts[catName] = (catCounts[catName] || 0) + 1;
     totalPremium += cov.premium;
 
-    const icon = CAT_ICONS[catName] || '📋';
     const tr = document.createElement('tr');
     tr.innerHTML = `
-      <td style="color:var(--text-light); font-size:11px; white-space:nowrap;">${idx + 1}</td>
-      <td style="text-align:center; font-size:16px;" title="${catName}">${icon}</td>
-      <td style="font-size:13px; font-weight:600;">${cov.name}</td>
-      <td class="amount-cell" style="white-space:nowrap;">${formatManwon(toManwon(cov.amount))}</td>
-      <td class="premium-cell" style="white-space:nowrap;">${cov.premium.toLocaleString()}원</td>
+      <td style="color:var(--text-light); font-size:11px; white-space:nowrap; width:4%;">${idx + 1}</td>
+      <td style="width:10%;"><span class="cat-badge cat-${catName}" style="font-size:10px;">${catName}</span></td>
+      <td style="font-size:14px; font-weight:700; width:55%;">${cov.name}</td>
+      <td class="amount-cell" style="white-space:nowrap; width:15%; font-size:13px;">${formatManwon(toManwon(cov.amount))}</td>
+      <td class="premium-cell" style="white-space:nowrap; width:16%;">${cov.premium.toLocaleString()}원</td>
     `;
     tbody.appendChild(tr);
   });
@@ -152,7 +154,7 @@ function renderStats(catCounts, totalPremium) {
   const catColors = {
     '암': '#CC0000', '뇌': '#3300CC', '심': '#CC0066', '상해': '#006699',
     '운전자': '#336600', '입원일당': '#996600', '수술': '#660099',
-    '납입면제': '#666', '기타': '#999'
+    '납입면제': '#555', '기타': '#999'
   };
 
   const grid = document.getElementById('statsGrid');
@@ -222,21 +224,32 @@ function makeCoverageList(items, titleClass = '') {
 // ===== 페이지 헤더 HTML =====
 function makePageHeader(icon, title, subtitle) {
   const customer = document.getElementById('customerName').value.trim() || '고객';
+  const birth = document.getElementById('customerBirth').value.trim() || '';
+  const gender = document.getElementById('customerGender').value || '';
   const planner = document.getElementById('plannerName').value.trim() || '';
   const branch = document.getElementById('branchName').value.trim() || '';
+  const product = document.getElementById('productName').value.trim() || '';
+  const payment = document.getElementById('paymentInfo').value.trim() || '';
   const today = new Date().toLocaleDateString('ko-KR');
+  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=70x70&data=${encodeURIComponent(APP_URL)}&margin=2`;
 
   return `
-    <div class="page-header">
-      <div class="page-header-left">
-        <h1>${icon} ${title}</h1>
+    <div class="page-header" style="position:relative;">
+      <div class="page-header-left" style="flex:1;">
+        <div style="font-size:10px; opacity:0.7; margin-bottom:3px; letter-spacing:1px;">현대해상화재보험 · HYUNDAI MARINE &amp; FIRE INSURANCE</div>
+        <h1 style="font-size:18px;">${icon} ${title}</h1>
         <div class="subtitle">${subtitle}</div>
-        <div style="margin-top:6px; font-size:11px; opacity:0.8;">※ 본 자료는 보험 상품을 쉽게 이해하기 위해 제작된 것으로 모집용으로 사용 불가</div>
+        ${product ? `<div style="margin-top:5px; font-size:11px; opacity:0.85; background:rgba(255,255,255,0.2); padding:3px 8px; border-radius:6px; display:inline-block;">${product}${payment ? ' · ' + payment : ''}</div>` : ''}
+        <div style="margin-top:5px; font-size:10px; opacity:0.75;">※ 본 자료는 보험 상품을 쉽게 이해하기 위해 제작된 것으로 모집용으로 사용 불가</div>
       </div>
-      <div class="page-header-right">
-        <div class="customer-name">< ${customer} > 고객님</div>
-        <div>${branch ? branch + ' ' : ''}${planner ? planner + ' 플래너' : ''}</div>
-        <div style="margin-top:4px; font-size:11px; opacity:0.8;">${today}</div>
+      <div style="display:flex; align-items:flex-start; gap:12px;">
+        <div class="page-header-right" style="text-align:right;">
+          <div class="customer-name" style="font-size:20px; font-weight:800;">< ${customer} > 고객님</div>
+          ${birth || gender ? `<div style="font-size:12px; opacity:0.85; margin-top:2px;">${birth}${gender ? ' · ' + gender + '성' : ''}</div>` : ''}
+          <div style="font-size:12px; opacity:0.85; margin-top:2px;">${branch ? branch + ' ' : ''}${planner ? planner + ' 플래너' : ''}</div>
+          <div style="margin-top:4px; font-size:11px; opacity:0.8;">${today}</div>
+        </div>
+        <img src="${qrUrl}" width="70" height="70" style="border-radius:6px; background:white; padding:2px; flex-shrink:0;" alt="QR" class="print-qr" onerror="this.style.display='none'">
       </div>
     </div>
   `;
