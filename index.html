@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>스마트 제안서 v0.10 | 현대해상화재보험</title>
+<title>스마트 제안서 v0.11 | 현대해상화재보험</title>
 <!-- QR코드 API용 캐시 허용 -->
 <meta http-equiv="Content-Security-Policy" content="img-src * data:;">
 <style>
@@ -276,7 +276,20 @@ body { font-family: 'Malgun Gothic', '맑은 고딕', -apple-system, sans-serif;
   text-align: center;
   border: 2px solid var(--gray);
   transition: all 0.2s;
-  cursor: default;
+  cursor: pointer;
+}
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+#catDetailPanel {
+  overflow: hidden;
+  animation: slideDown 0.25s ease;
+  border-top: 2px solid var(--orange);
+  margin-top: 14px;
+  padding-top: 12px;
+  max-height: 320px;
+  overflow-y: auto;
 }
 .stat-card:hover { border-color: var(--orange); transform: translateY(-2px); box-shadow: var(--shadow); }
 .stat-card.active { border-color: var(--orange); background: var(--orange-pale); }
@@ -690,6 +703,17 @@ body { font-family: 'Malgun Gothic', '맑은 고딕', -apple-system, sans-serif;
         </div>
       </div>
 
+      <!-- 담보 분류 현황 (설계 붙이기 ~ 분석결과 사이) -->
+      <div class="card" id="summaryCard" style="display:none;">
+        <div class="card-header">
+          <div class="card-icon">📈</div>
+          <h2>담보 분류 현황</h2>
+        </div>
+        <div class="stats-grid" id="statsGrid"></div>
+        <div id="catDetailPanel" style="display:none;"></div>
+        <div class="premium-summary" id="premiumSummary"></div>
+      </div>
+
       <!-- 파싱 결과 테이블 -->
       <div class="card" id="resultCard" style="display:none;">
         <div class="card-header">
@@ -765,14 +789,6 @@ body { font-family: 'Malgun Gothic', '맑은 고딕', -apple-system, sans-serif;
         </div>
       </div>
 
-      <!-- 요약 통계 -->
-      <div class="card" id="summaryCard" style="display:none;">
-        <div class="card-header">
-          <div class="card-icon">📈</div>
-          <h2>담보 분류 현황</h2>
-        </div>
-        <div class="stats-grid" id="statsGrid"></div>
-        <div class="premium-summary" id="premiumSummary"></div>
       </div>
     </div>
   </div>
