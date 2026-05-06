@@ -232,39 +232,36 @@ function makePageHeader(icon, title, subtitle) {
   const payment = document.getElementById('paymentInfo').value.trim() || '';
   const today = new Date().toLocaleDateString('ko-KR');
   const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=${encodeURIComponent(APP_URL)}&margin=2`;
+  // QR onclick: window.open (PWA에서 a href는 현재창 이동, window.open은 외부 브라우저 오픈)
+  const qrClick = `(function(){var a=document.createElement('a');a.href='${APP_URL}';a.target='_blank';a.rel='noopener noreferrer';document.body.appendChild(a);a.click();document.body.removeChild(a);})()`;
+
+  const infoLine = [birth, gender ? gender + '성' : '', branch, planner ? planner + ' 플래너' : '']
+    .filter(Boolean).join(' · ');
 
   return `
     <div class="page-header" style="padding:0; flex-direction:column;">
 
-      <!-- 행1: 회사명 + 제목 + 날짜 -->
-      <div style="display:flex; align-items:center; justify-content:space-between; padding:10px 18px 8px; border-bottom:1px solid rgba(255,255,255,0.2);">
-        <div style="font-size:10px; opacity:0.75; letter-spacing:0.8px; white-space:nowrap;">현대해상화재보험</div>
-        <div style="flex:1; text-align:center;">
-          <span style="font-size:17px; font-weight:800; letter-spacing:-0.3px;">${icon} ${title}</span>
-          <div style="font-size:11px; opacity:0.85; margin-top:2px;">${subtitle}</div>
+      <!-- 행1: 회사명 | 제목+부제+상품명 | 날짜 -->
+      <div style="display:flex; align-items:center; gap:6px; padding:9px 14px 7px; border-bottom:1px solid rgba(255,255,255,0.2);">
+        <div style="font-size:9px; opacity:0.7; white-space:nowrap; line-height:1.3;">현대해상<br>화재보험</div>
+        <div style="flex:1; text-align:center; padding:0 4px;">
+          <div style="font-size:15px; font-weight:800; white-space:nowrap;">${icon} ${title}</div>
+          <div style="font-size:10px; opacity:0.85;">${subtitle}</div>
+          ${product ? `<div style="font-size:11px; font-weight:700; opacity:0.95; margin-top:3px;">📌 ${product}${payment ? ' · ' + payment : ''}</div>` : ''}
         </div>
-        <div style="font-size:11px; opacity:0.8; white-space:nowrap;">${today}</div>
+        <div style="font-size:10px; opacity:0.8; white-space:nowrap;">${today}</div>
       </div>
 
-      <!-- 행2: 고객 정보 -->
-      <div style="display:flex; align-items:center; justify-content:space-between; padding:10px 18px; border-bottom:1px solid rgba(255,255,255,0.2);">
-        <div>
-          <div style="font-size:22px; font-weight:900; letter-spacing:-0.5px;">< ${customer} > 고객님</div>
-          ${birth || gender ? `<div style="font-size:12px; opacity:0.85; margin-top:3px;">${birth}${gender ? ' · ' + gender + '성' : ''}</div>` : ''}
-          <div style="font-size:12px; opacity:0.85; margin-top:2px;">${branch ? branch + ' · ' : ''}${planner ? planner + ' 플래너' : ''}</div>
+      <!-- 행2: 고객 정보 + QR -->
+      <div style="display:flex; align-items:center; justify-content:space-between; padding:9px 14px; gap:10px;">
+        <div style="flex:1; min-width:0;">
+          <div style="font-size:20px; font-weight:900; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">< ${customer} > 고객님</div>
+          ${infoLine ? `<div style="font-size:11px; opacity:0.85; margin-top:3px;">${infoLine}</div>` : ''}
         </div>
-        <div style="font-size:11px; opacity:0.75; margin-top:4px; font-size:10px; opacity:0.7; max-width:160px; text-align:right;">※ 본 자료는 보험 상품을 쉽게 이해하기 위해 제작된 것으로 모집용으로 사용 불가</div>
-      </div>
-
-      <!-- 행3: 상품정보 + QR -->
-      <div style="display:flex; align-items:center; justify-content:space-between; padding:8px 18px;">
-        <div style="flex:1;">
-          ${product ? `<div style="font-size:12px; font-weight:700; opacity:0.95;">📌 ${product}</div>` : ''}
-          ${payment ? `<div style="font-size:11px; opacity:0.8; margin-top:2px;">📅 ${payment}</div>` : ''}
-        </div>
-        <a href="${APP_URL}" target="_blank" rel="noopener" style="flex-shrink:0; margin-left:12px;" title="앱 열기 (QR)">
-          <img src="${qrUrl}" width="72" height="72" style="border-radius:6px; background:white; padding:3px; display:block;" alt="QR" onerror="this.parentElement.style.display='none'">
-        </a>
+        <img src="${qrUrl}" width="72" height="72"
+          style="border-radius:6px; background:white; padding:3px; flex-shrink:0; cursor:pointer; display:block;"
+          onclick="${qrClick}"
+          alt="QR" onerror="this.style.display='none'">
       </div>
 
     </div>
@@ -1211,13 +1208,31 @@ function loadSampleData() {
       applyPos(pos, true);
     }
 
+    // ownTouch: 터치가 이 버튼에서 시작됐는지 추적 (다른 요소 터치 시 인터셉트 방지)
+    let ownTouch = false;
+
     btn.addEventListener('mousedown',  e => { e.preventDefault(); onStart(e.clientX, e.clientY); });
     document.addEventListener('mousemove', e => onMove(e.clientX, e.clientY));
     document.addEventListener('mouseup',   () => onEnd());
 
-    btn.addEventListener('touchstart', e => { const t = e.touches[0]; onStart(t.clientX, t.clientY); }, { passive: true });
-    document.addEventListener('touchmove',  e => { if (dragging) { e.preventDefault(); const t = e.touches[0]; onMove(t.clientX, t.clientY); } }, { passive: false });
-    document.addEventListener('touchend',   () => onEnd());
+    btn.addEventListener('touchstart', e => {
+      ownTouch = true;
+      const t = e.touches[0];
+      onStart(t.clientX, t.clientY);
+    }, { passive: true });
+
+    document.addEventListener('touchmove', e => {
+      if (!ownTouch || !dragging) return;
+      e.preventDefault();
+      const t = e.touches[0];
+      onMove(t.clientX, t.clientY);
+    }, { passive: false });
+
+    document.addEventListener('touchend', () => {
+      if (!ownTouch) return;
+      ownTouch = false;
+      onEnd();
+    });
   });
 })();
 
