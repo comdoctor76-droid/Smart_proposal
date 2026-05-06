@@ -399,7 +399,7 @@ function makePageHeader(icon, title, subtitle) {
       <div style="display:flex; align-items:center; gap:6px; padding:8px 14px 6px; border-bottom:1px solid rgba(255,255,255,0.2);">
         <div style="font-size:9px; opacity:0.7; white-space:nowrap; line-height:1.4;">현대해상<br>화재보험</div>
         <div style="flex:1; text-align:center; padding:0 4px;">
-          <div style="font-size:15px; font-weight:800;">${icon} ${title}</div>
+          <div style="font-size:22px; font-weight:800;">${icon} ${title}</div>
           <div style="font-size:10px; opacity:0.85;">${subtitle}</div>
         </div>
         <div style="font-size:10px; opacity:0.8; white-space:nowrap;">${today}</div>
@@ -472,7 +472,7 @@ function renderAllinone(coverages) {
 
   container.innerHTML = `
     <div class="proposal-page">
-      ${makePageHeader('📊', '스마트 제안서 · 올인원', '내 보험 한번에 보여주는 스마트제안서')}
+      ${makePageHeader('📊', "안 보이는 '내 보험'을 한눈에 보여주는 스마트제안서", '내 보험 전체 보장 한눈에')}
       <div class="page-body">
         <div style="display:flex; justify-content:flex-end; align-items:center; margin-bottom:12px; font-size:12px; color:var(--text-light);">
           <span>월 납입 보험료 합계 <strong style="color:var(--orange); font-size:14px;">${Math.round(totalPremium).toLocaleString()}원</strong></span>
@@ -505,7 +505,7 @@ function renderCancer(coverages) {
 
   container.innerHTML = `
     <div class="proposal-page">
-      ${makePageHeader('🔬', '암 보장 한번에 보여주는 스마트제안서', '진단 · 항암치료 · 수술 · 입원 보장')}
+      ${makePageHeader('🔬', "안 보이는 '암' 보험을 한눈에 보여주는 스마트제안서", '진단 · 항암치료 · 수술 · 입원 보장')}
       <div class="page-body">
         <div class="highlight-box">
           <div>
@@ -547,7 +547,7 @@ function renderBrain(coverages) {
 
   container.innerHTML = `
     <div class="proposal-page">
-      ${makePageHeader('🧠', '뇌 보장 한번에 보여주는 스마트제안서', '뇌혈관질환 단계별 치료보장')}
+      ${makePageHeader('🧠', "안 보이는 '뇌혈관' 보험을 한눈에 보여주는 스마트제안서", '뇌혈관질환 단계별 치료보장')}
       <div class="page-body">
         <div style="background:#EEF2FF; border-left:4px solid #3344CC; padding:12px 16px; border-radius:0 8px 8px 0; margin-bottom:16px; font-size:13px; color:#3344CC;">
           💡 심·뇌혈관질환은 반복적인 수술비 보장이 매우 중요합니다. 재발할 수 있기 때문입니다.
@@ -593,7 +593,7 @@ function renderHeart(coverages) {
 
   container.innerHTML = `
     <div class="proposal-page">
-      ${makePageHeader('❤️', '심장 보장 한번에 보여주는 스마트제안서', '심장질환 진단·수술·치료 보장')}
+      ${makePageHeader('❤️', "안 보이는 '심장' 보험을 한눈에 보여주는 스마트제안서", '심장질환 진단·수술·치료 보장')}
       <div class="page-body">
         <div class="flow-diagram">
           ${heartTypes.map((ht, i) => {
@@ -641,7 +641,7 @@ function renderDeath(coverages) {
 
   container.innerHTML = `
     <div class="proposal-page">
-      ${makePageHeader('🛡️', '사망·장해 보장 한번에 보여주는 스마트제안서', '상해사망·후유장해 보장')}
+      ${makePageHeader('🛡️', "안 보이는 '사망·장해' 보험을 한눈에 보여주는 스마트제안서", '상해사망·후유장해 보장')}
       <div class="page-body">
         <div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;">
           <div class="highlight-box" style="flex:1;min-width:140px;">
@@ -687,7 +687,7 @@ function renderInjury(coverages) {
 
   container.innerHTML = `
     <div class="proposal-page">
-      ${makePageHeader('🦴', '상해 보장 한번에 보여주는 스마트제안서', '골절·화상·재활 보장')}
+      ${makePageHeader('🦴', "안 보이는 '상해' 보험을 한눈에 보여주는 스마트제안서", '골절·화상·재활 보장')}
       <div class="page-body">
         <div class="highlight-box">
           <div><div class="highlight-label">상해 보장 합계</div></div>
@@ -722,24 +722,30 @@ function renderOnePager(coverages) {
   const heartDiag = heartItems.filter(c => c.cat.sub === '진단');
 
   function makeSection(icon, color, title, diagItems, allItems) {
+    const sid = 'ops' + (++_colSec);
     const topItems = diagItems.slice(0, 5);
+    const totalAmt = formatManwon(toManwon(sumAmounts(allItems)));
     return `
       <div style="flex:1; border:2px solid ${color}; border-radius:10px; overflow:hidden; min-width:180px;">
-        <div style="background:${color}; color:white; padding:10px 14px; font-size:14px; font-weight:800; display:flex; align-items:center; gap:8px;">
-          <span>${icon}</span> ${title}
+        <div style="background:${color}; color:white; padding:10px 14px; font-size:14px; font-weight:800; display:flex; align-items:center; justify-content:space-between; gap:8px; cursor:pointer; user-select:none;"
+             onclick="(function(){var el=document.getElementById('${sid}');var ar=document.getElementById('${sid}_a');var open=el.style.display!=='none';el.style.display=open?'none':'block';ar.style.transform=open?'':'rotate(180deg)';if(!open){el.style.animation='none';requestAnimationFrame(function(){el.style.animation='slideDown 0.25s ease';});}})()">
+          <span><span>${icon}</span> ${title} 총 ${totalAmt}</span>
+          <span id="${sid}_a" style="font-size:10px; transition:transform 0.25s; display:inline-block;">▼</span>
         </div>
-        <div style="padding:6px 0;">
-          ${topItems.length > 0 ? topItems.map(c => `
-            <div style="display:flex; justify-content:space-between; padding:6px 12px; border-bottom:1px solid #f0f0f0; font-size:12px;">
-              <span style="flex:1; color:#333;">${c.cat ? c.cat.label : c.name}</span>
-              <span style="font-weight:700; color:${color}; white-space:nowrap; margin-left:8px;">${formatManwon(toManwon(c.amount))}</span>
-            </div>
-          `).join('') : '<div style="padding:10px 12px; color:#999; font-size:12px;">담보 없음</div>'}
-          ${allItems.length > topItems.length ? `<div style="padding:6px 12px; font-size:11px; color:#999;">외 ${allItems.length - topItems.length}개 담보...</div>` : ''}
-        </div>
-        <div style="background:#f8f8f8; padding:8px 12px; display:flex; justify-content:space-between; align-items:center; border-top:1px solid #e0e0e0;">
-          <span style="font-size:11px; color:#666; font-weight:700;">총 ${allItems.length}개 담보</span>
-          <span style="font-size:14px; font-weight:800; color:${color};">${formatManwon(toManwon(sumAmounts(allItems)))}</span>
+        <div id="${sid}" style="display:none;">
+          <div style="padding:6px 0;">
+            ${topItems.length > 0 ? topItems.map(c => `
+              <div style="display:flex; justify-content:space-between; padding:6px 12px; border-bottom:1px solid #f0f0f0; font-size:12px;">
+                <span style="flex:1; color:#333;">${c.cat ? c.cat.label : c.name}</span>
+                <span style="font-weight:700; color:${color}; white-space:nowrap; margin-left:8px;">${formatManwon(toManwon(c.amount))}</span>
+              </div>
+            `).join('') : '<div style="padding:10px 12px; color:#999; font-size:12px;">담보 없음</div>'}
+            ${allItems.length > topItems.length ? `<div style="padding:6px 12px; font-size:11px; color:#999;">외 ${allItems.length - topItems.length}개 담보...</div>` : ''}
+          </div>
+          <div style="background:#f8f8f8; padding:8px 12px; display:flex; justify-content:space-between; align-items:center; border-top:1px solid #e0e0e0;">
+            <span style="font-size:11px; color:#666; font-weight:700;">총 ${allItems.length}개 담보</span>
+            <span style="font-size:14px; font-weight:800; color:${color};">${totalAmt}</span>
+          </div>
         </div>
       </div>
     `;
@@ -747,7 +753,7 @@ function renderOnePager(coverages) {
 
   container.innerHTML = `
     <div class="proposal-page">
-      ${makePageHeader('📄', '스마트 제안서 · 한장 요약', '암 · 뇌 · 심장 핵심 보장 한눈에 보기')}
+      ${makePageHeader('📄', "안 보이는 '핵심 보장'을 한눈에 보여주는 스마트제안서", '암 · 뇌 · 심장 핵심 보장 한눈에 보기')}
       <div class="page-body">
         <div style="display:flex; justify-content:flex-end; margin-bottom:12px; font-size:12px; color:var(--text-light);">
           <span>월 납입 보험료 합계 <strong style="color:var(--orange); font-size:14px;">${Math.round(totalPremium).toLocaleString()}원</strong> · 총 ${coverages.length}개 담보</span>
@@ -830,7 +836,7 @@ function renderWoman(coverages) {
 
   container.innerHTML = `
     <div class="proposal-page">
-      ${makePageHeader('🌸', '수술 보장 한번에 보여주는 스마트제안서 (여성)', '여성 특화 수술·암 보장')}
+      ${makePageHeader('🌸', "안 보이는 '수술' 보험을 한눈에 보여주는 스마트제안서 (여성)", '여성 특화 수술·암 보장')}
       <div class="page-body">
         <div class="highlight-box" style="background:linear-gradient(135deg, #CC0066, #990044);">
           <div>
@@ -888,7 +894,7 @@ function renderDriver(coverages) {
 
   container.innerHTML = `
     <div class="proposal-page">
-      ${makePageHeader('🚗', '운전자 보장 한번에 보여주는 스마트제안서', '자동차사고 법률·치료 보장')}
+      ${makePageHeader('🚗', "안 보이는 '운전자' 보험을 한눈에 보여주는 스마트제안서", '자동차사고 법률·치료 보장')}
       <div class="page-body">
         <div class="allinone-grid">
           <div class="coverage-section">
@@ -926,7 +932,7 @@ function renderDaily(coverages) {
 
   container.innerHTML = `
     <div class="proposal-page">
-      ${makePageHeader('🏥', '입원일당 보장 한번에 보여주는 스마트제안서', '질병 입원 시 하루 보장 내역')}
+      ${makePageHeader('🏥', "안 보이는 '입원일당' 보험을 한눈에 보여주는 스마트제안서", '질병 입원 시 하루 보장 내역')}
       <div class="page-body">
         <div class="highlight-box">
           <div>
@@ -968,7 +974,7 @@ function renderSurgery(coverages) {
 
   container.innerHTML = `
     <div class="proposal-page">
-      ${makePageHeader('⚕️', '수술 보장 한번에 보여주는 스마트제안서 (남성)', '남성 특화 수술 보장')}
+      ${makePageHeader('⚕️', "안 보이는 '수술' 보험을 한눈에 보여주는 스마트제안서 (남성)", '남성 특화 수술 보장')}
       <div class="page-body">
         <div class="highlight-box">
           <div>
