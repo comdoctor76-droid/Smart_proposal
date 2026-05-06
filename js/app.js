@@ -108,6 +108,13 @@ function detectHeaderColumns(cols) {
   return result;
 }
 
+// 카테고리 아이콘 맵 (전역)
+const CAT_ICONS = {
+  '암': '🔬', '뇌': '🧠', '심': '❤️', '상해': '🛡️',
+  '운전자': '🚗', '입원일당': '🏥', '수술': '⚕️',
+  '납입면제': '✅', '기타': '📋'
+};
+
 // ===== 결과 테이블 렌더링 =====
 function renderResults(coverages) {
   const tbody = document.getElementById('resultBody');
@@ -122,13 +129,14 @@ function renderResults(coverages) {
     catCounts[catName] = (catCounts[catName] || 0) + 1;
     totalPremium += cov.premium;
 
+    const icon = CAT_ICONS[catName] || '📋';
     const tr = document.createElement('tr');
     tr.innerHTML = `
-      <td style="color:var(--text-light); font-size:11px;">${idx + 1}</td>
-      <td><span class="cat-badge cat-${catName}">${catName}</span></td>
-      <td style="font-size:12px;">${cov.name}</td>
-      <td class="amount-cell">${formatManwon(toManwon(cov.amount))}</td>
-      <td class="premium-cell">${cov.premium.toLocaleString()}원</td>
+      <td style="color:var(--text-light); font-size:11px; white-space:nowrap;">${idx + 1}</td>
+      <td style="text-align:center; font-size:16px;" title="${catName}">${icon}</td>
+      <td style="font-size:13px; font-weight:600;">${cov.name}</td>
+      <td class="amount-cell" style="white-space:nowrap;">${formatManwon(toManwon(cov.amount))}</td>
+      <td class="premium-cell" style="white-space:nowrap;">${cov.premium.toLocaleString()}원</td>
     `;
     tbody.appendChild(tr);
   });
@@ -141,25 +149,20 @@ function renderResults(coverages) {
 }
 
 function renderStats(catCounts, totalPremium) {
-  const catInfo = {
-    '암': { icon: '🔬', color: '#CC0000' },
-    '뇌': { icon: '🧠', color: '#3300CC' },
-    '심': { icon: '❤️', color: '#CC0066' },
-    '상해': { icon: '🦴', color: '#006699' },
-    '운전자': { icon: '🚗', color: '#336600' },
-    '입원일당': { icon: '🏥', color: '#996600' },
-    '수술': { icon: '⚕️', color: '#660099' },
-    '납입면제': { icon: '✅', color: '#666' },
-    '기타': { icon: '📋', color: '#999' },
+  const catColors = {
+    '암': '#CC0000', '뇌': '#3300CC', '심': '#CC0066', '상해': '#006699',
+    '운전자': '#336600', '입원일당': '#996600', '수술': '#660099',
+    '납입면제': '#666', '기타': '#999'
   };
 
   const grid = document.getElementById('statsGrid');
   grid.innerHTML = '';
   Object.entries(catCounts).forEach(([cat, count]) => {
-    const info = catInfo[cat] || catInfo['기타'];
+    const icon = CAT_ICONS[cat] || '📋';
+    const color = catColors[cat] || '#999';
     const div = document.createElement('div');
     div.className = 'stat-card';
-    div.innerHTML = `<div class="stat-num" style="color:${info.color}">${info.icon} ${count}</div><div class="stat-label">${cat}</div>`;
+    div.innerHTML = `<div class="stat-num" style="color:${color}">${icon} ${count}</div><div class="stat-label">${cat}</div>`;
     grid.appendChild(div);
   });
 
