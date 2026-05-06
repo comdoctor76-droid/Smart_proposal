@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>스마트 제안서 v0.09 | 현대해상화재보험</title>
+<title>스마트 제안서 v0.11 | 현대해상화재보험</title>
 <!-- QR코드 API용 캐시 허용 -->
 <meta http-equiv="Content-Security-Policy" content="img-src * data:;">
 <style>
@@ -276,7 +276,20 @@ body { font-family: 'Malgun Gothic', '맑은 고딕', -apple-system, sans-serif;
   text-align: center;
   border: 2px solid var(--gray);
   transition: all 0.2s;
-  cursor: default;
+  cursor: pointer;
+}
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+#catDetailPanel {
+  overflow: hidden;
+  animation: slideDown 0.25s ease;
+  border-top: 2px solid var(--orange);
+  margin-top: 14px;
+  padding-top: 12px;
+  max-height: 320px;
+  overflow-y: auto;
 }
 .stat-card:hover { border-color: var(--orange); transform: translateY(-2px); box-shadow: var(--shadow); }
 .stat-card.active { border-color: var(--orange); background: var(--orange-pale); }
@@ -690,6 +703,17 @@ body { font-family: 'Malgun Gothic', '맑은 고딕', -apple-system, sans-serif;
         </div>
       </div>
 
+      <!-- 담보 분류 현황 (설계 붙이기 ~ 분석결과 사이) -->
+      <div class="card" id="summaryCard" style="display:none;">
+        <div class="card-header">
+          <div class="card-icon">📈</div>
+          <h2>담보 분류 현황</h2>
+        </div>
+        <div class="stats-grid" id="statsGrid"></div>
+        <div id="catDetailPanel" style="display:none;"></div>
+        <div class="premium-summary" id="premiumSummary"></div>
+      </div>
+
       <!-- 파싱 결과 테이블 -->
       <div class="card" id="resultCard" style="display:none;">
         <div class="card-header">
@@ -765,14 +789,6 @@ body { font-family: 'Malgun Gothic', '맑은 고딕', -apple-system, sans-serif;
         </div>
       </div>
 
-      <!-- 요약 통계 -->
-      <div class="card" id="summaryCard" style="display:none;">
-        <div class="card-header">
-          <div class="card-icon">📈</div>
-          <h2>담보 분류 현황</h2>
-        </div>
-        <div class="stats-grid" id="statsGrid"></div>
-        <div class="premium-summary" id="premiumSummary"></div>
       </div>
     </div>
   </div>
@@ -782,9 +798,12 @@ body { font-family: 'Malgun Gothic', '맑은 고딕', -apple-system, sans-serif;
 <div class="tab-content" id="content-allinone">
   <div class="print-controls">
     <h3>📊 올인원 · 전체 보장 요약</h3>
-    <div class="btn-group">
-      <button class="btn btn-primary" onclick="printSection('allinone')">🖨️ 인쇄</button>
-      <button class="btn btn-outline" onclick="switchTab('input')">← 데이터 입력</button>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <img id="tab-qr-allinone" src="" width="48" height="48" style="border-radius:4px;cursor:pointer;background:white;padding:2px;border:1px solid #ddd;" alt="QR" onclick="openTabQR('allinone')" onerror="this.style.display='none'">
+      <div class="btn-group">
+        <button class="btn btn-primary" onclick="printSection('allinone')">🖨️ 인쇄</button>
+        <button class="btn btn-outline" onclick="switchTab('input')">← 데이터 입력</button>
+      </div>
     </div>
   </div>
   <div id="allinoneContent">
@@ -800,8 +819,11 @@ body { font-family: 'Malgun Gothic', '맑은 고딕', -apple-system, sans-serif;
 <div class="tab-content" id="content-cancer">
   <div class="print-controls">
     <h3>🔬 암 보장 제안서</h3>
-    <div class="btn-group">
-      <button class="btn btn-primary" onclick="printSection('cancer')">🖨️ 인쇄</button>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <img id="tab-qr-cancer" src="" width="48" height="48" style="border-radius:4px;cursor:pointer;background:white;padding:2px;border:1px solid #ddd;" alt="QR" onclick="openTabQR('cancer')" onerror="this.style.display='none'">
+      <div class="btn-group">
+        <button class="btn btn-primary" onclick="printSection('cancer')">🖨️ 인쇄</button>
+      </div>
     </div>
   </div>
   <div id="cancerContent">
@@ -813,8 +835,11 @@ body { font-family: 'Malgun Gothic', '맑은 고딕', -apple-system, sans-serif;
 <div class="tab-content" id="content-brain">
   <div class="print-controls">
     <h3>🧠 뇌 보장 제안서</h3>
-    <div class="btn-group">
-      <button class="btn btn-primary" onclick="printSection('brain')">🖨️ 인쇄</button>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <img id="tab-qr-brain" src="" width="48" height="48" style="border-radius:4px;cursor:pointer;background:white;padding:2px;border:1px solid #ddd;" alt="QR" onclick="openTabQR('brain')" onerror="this.style.display='none'">
+      <div class="btn-group">
+        <button class="btn btn-primary" onclick="printSection('brain')">🖨️ 인쇄</button>
+      </div>
     </div>
   </div>
   <div id="brainContent">
@@ -826,8 +851,11 @@ body { font-family: 'Malgun Gothic', '맑은 고딕', -apple-system, sans-serif;
 <div class="tab-content" id="content-heart">
   <div class="print-controls">
     <h3>❤️ 심장 보장 제안서</h3>
-    <div class="btn-group">
-      <button class="btn btn-primary" onclick="printSection('heart')">🖨️ 인쇄</button>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <img id="tab-qr-heart" src="" width="48" height="48" style="border-radius:4px;cursor:pointer;background:white;padding:2px;border:1px solid #ddd;" alt="QR" onclick="openTabQR('heart')" onerror="this.style.display='none'">
+      <div class="btn-group">
+        <button class="btn btn-primary" onclick="printSection('heart')">🖨️ 인쇄</button>
+      </div>
     </div>
   </div>
   <div id="heartContent">
@@ -839,8 +867,11 @@ body { font-family: 'Malgun Gothic', '맑은 고딕', -apple-system, sans-serif;
 <div class="tab-content" id="content-death">
   <div class="print-controls">
     <h3>🛡️ 사망·장해 보장 제안서</h3>
-    <div class="btn-group">
-      <button class="btn btn-primary" onclick="printSection('death')">🖨️ 인쇄</button>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <img id="tab-qr-death" src="" width="48" height="48" style="border-radius:4px;cursor:pointer;background:white;padding:2px;border:1px solid #ddd;" alt="QR" onclick="openTabQR('death')" onerror="this.style.display='none'">
+      <div class="btn-group">
+        <button class="btn btn-primary" onclick="printSection('death')">🖨️ 인쇄</button>
+      </div>
     </div>
   </div>
   <div id="deathContent">
@@ -852,8 +883,11 @@ body { font-family: 'Malgun Gothic', '맑은 고딕', -apple-system, sans-serif;
 <div class="tab-content" id="content-onepager">
   <div class="print-controls">
     <h3>📄 한장 요약 제안서</h3>
-    <div class="btn-group">
-      <button class="btn btn-primary" onclick="printSection('onepager')">🖨️ 인쇄</button>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <img id="tab-qr-onepager" src="" width="48" height="48" style="border-radius:4px;cursor:pointer;background:white;padding:2px;border:1px solid #ddd;" alt="QR" onclick="openTabQR('onepager')" onerror="this.style.display='none'">
+      <div class="btn-group">
+        <button class="btn btn-primary" onclick="printSection('onepager')">🖨️ 인쇄</button>
+      </div>
     </div>
   </div>
   <div id="onepagerContent">
@@ -865,8 +899,11 @@ body { font-family: 'Malgun Gothic', '맑은 고딕', -apple-system, sans-serif;
 <div class="tab-content" id="content-driver">
   <div class="print-controls">
     <h3>🚗 운전자 보장 제안서</h3>
-    <div class="btn-group">
-      <button class="btn btn-primary" onclick="printSection('driver')">🖨️ 인쇄</button>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <img id="tab-qr-driver" src="" width="48" height="48" style="border-radius:4px;cursor:pointer;background:white;padding:2px;border:1px solid #ddd;" alt="QR" onclick="openTabQR('driver')" onerror="this.style.display='none'">
+      <div class="btn-group">
+        <button class="btn btn-primary" onclick="printSection('driver')">🖨️ 인쇄</button>
+      </div>
     </div>
   </div>
   <div id="driverContent">
@@ -878,8 +915,11 @@ body { font-family: 'Malgun Gothic', '맑은 고딕', -apple-system, sans-serif;
 <div class="tab-content" id="content-daily">
   <div class="print-controls">
     <h3>🏥 입원일당 보장 제안서</h3>
-    <div class="btn-group">
-      <button class="btn btn-primary" onclick="printSection('daily')">🖨️ 인쇄</button>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <img id="tab-qr-daily" src="" width="48" height="48" style="border-radius:4px;cursor:pointer;background:white;padding:2px;border:1px solid #ddd;" alt="QR" onclick="openTabQR('daily')" onerror="this.style.display='none'">
+      <div class="btn-group">
+        <button class="btn btn-primary" onclick="printSection('daily')">🖨️ 인쇄</button>
+      </div>
     </div>
   </div>
   <div id="dailyContent">
@@ -891,8 +931,11 @@ body { font-family: 'Malgun Gothic', '맑은 고딕', -apple-system, sans-serif;
 <div class="tab-content" id="content-woman">
   <div class="print-controls">
     <h3>🌸 수술 보장 제안서 (여성)</h3>
-    <div class="btn-group">
-      <button class="btn btn-primary" onclick="printSection('woman')">🖨️ 인쇄</button>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <img id="tab-qr-woman" src="" width="48" height="48" style="border-radius:4px;cursor:pointer;background:white;padding:2px;border:1px solid #ddd;" alt="QR" onclick="openTabQR('woman')" onerror="this.style.display='none'">
+      <div class="btn-group">
+        <button class="btn btn-primary" onclick="printSection('woman')">🖨️ 인쇄</button>
+      </div>
     </div>
   </div>
   <div id="womanContent">
@@ -904,8 +947,11 @@ body { font-family: 'Malgun Gothic', '맑은 고딕', -apple-system, sans-serif;
 <div class="tab-content" id="content-surgery">
   <div class="print-controls">
     <h3>⚕️ 수술 보장 제안서 (남성)</h3>
-    <div class="btn-group">
-      <button class="btn btn-primary" onclick="printSection('surgery')">🖨️ 인쇄</button>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <img id="tab-qr-surgery" src="" width="48" height="48" style="border-radius:4px;cursor:pointer;background:white;padding:2px;border:1px solid #ddd;" alt="QR" onclick="openTabQR('surgery')" onerror="this.style.display='none'">
+      <div class="btn-group">
+        <button class="btn btn-primary" onclick="printSection('surgery')">🖨️ 인쇄</button>
+      </div>
     </div>
   </div>
   <div id="surgeryContent">

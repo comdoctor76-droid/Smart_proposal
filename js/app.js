@@ -118,6 +118,36 @@ const CAT_ICONS = {
 // QR코드 URL (앱 주소)
 const APP_URL = 'https://comdoctor76-droid.github.io/Smart_proposal/';
 
+// 탭별 QR 링크
+const TAB_QR_URLS = {
+  allinone: APP_URL + '?tab=allinone',
+  cancer:   APP_URL + '?tab=cancer',
+  brain:    APP_URL + '?tab=brain',
+  heart:    APP_URL + '?tab=heart',
+  death:    APP_URL + '?tab=death',
+  onepager: APP_URL + '?tab=onepager',
+  driver:   APP_URL + '?tab=driver',
+  daily:    APP_URL + '?tab=daily',
+  woman:    APP_URL + '?tab=woman',
+  surgery:  APP_URL + '?tab=surgery',
+};
+
+function openTabQR(tabId) {
+  const url = TAB_QR_URLS[tabId] || APP_URL;
+  var a = document.createElement('a');
+  a.href = url; a.target = '_blank'; a.rel = 'noopener noreferrer';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+}
+
+function initTabQRs() {
+  Object.entries(TAB_QR_URLS).forEach(([tabId, url]) => {
+    const img = document.getElementById('tab-qr-' + tabId);
+    if (img) {
+      img.src = `https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(url)}&margin=2`;
+    }
+  });
+}
+
 // ===== 결과 테이블 렌더링 =====
 function renderResults(coverages) {
   const tbody = document.getElementById('resultBody');
@@ -150,12 +180,61 @@ function renderResults(coverages) {
   renderStats(catCounts, totalPremium);
 }
 
+function toggleCatDetail(cat) {
+  const panel = document.getElementById('catDetailPanel');
+  const allCards = document.querySelectorAll('.stat-card');
+  const clickedCard = document.querySelector(`.stat-card[data-cat="${cat}"]`);
+
+  if (panel._activeCat === cat && panel.style.display !== 'none') {
+    panel.style.display = 'none';
+    panel._activeCat = '';
+    allCards.forEach(c => c.classList.remove('active'));
+    return;
+  }
+
+  allCards.forEach(c => c.classList.remove('active'));
+  if (clickedCard) clickedCard.classList.add('active');
+  panel._activeCat = cat;
+
+  const catColors = {
+    '암': '#CC0000', '뇌': '#3300CC', '심': '#CC0066', '상해': '#006699',
+    '운전자': '#336600', '입원일당': '#996600', '수술': '#660099',
+    '납입면제': '#555', '기타': '#999'
+  };
+  const color = catColors[cat] || '#999';
+  const catCovs = parsedCoverages.filter(c => c.cat && c.cat.cat === cat);
+  const totalAmt = catCovs.reduce((s, c) => s + c.amount, 0);
+  const totalPrem = catCovs.reduce((s, c) => s + c.premium, 0);
+
+  let rows = catCovs.length === 0
+    ? '<div style="padding:10px 0; color:#999; font-size:13px;">해당 담보가 없습니다.</div>'
+    : catCovs.map(c => `
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid #f5f5f5;gap:8px;">
+          <span style="flex:1;font-size:13px;">${c.name}</span>
+          <span style="font-weight:700;color:${color};white-space:nowrap;font-size:13px;">${formatManwon(toManwon(c.amount))}</span>
+          <span style="color:#999;white-space:nowrap;font-size:12px;">${c.premium.toLocaleString()}원</span>
+        </div>`).join('');
+
+  panel.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+      <span style="font-weight:700;font-size:14px;color:${color};">${CAT_ICONS[cat]||'📋'} ${cat} 담보 (${catCovs.length}개)</span>
+      <span style="font-size:12px;color:#666;">월 보험료 ${Math.round(totalPrem).toLocaleString()}원</span>
+    </div>
+    ${rows}`;
+  panel.style.display = 'block';
+  panel.style.animation = 'none';
+  requestAnimationFrame(() => { panel.style.animation = 'slideDown 0.25s ease'; });
+}
+
 function renderStats(catCounts, totalPremium) {
   const catColors = {
     '암': '#CC0000', '뇌': '#3300CC', '심': '#CC0066', '상해': '#006699',
     '운전자': '#336600', '입원일당': '#996600', '수술': '#660099',
     '납입면제': '#555', '기타': '#999'
   };
+
+  const panel = document.getElementById('catDetailPanel');
+  if (panel) { panel.style.display = 'none'; panel._activeCat = ''; }
 
   const grid = document.getElementById('statsGrid');
   grid.innerHTML = '';
@@ -164,6 +243,8 @@ function renderStats(catCounts, totalPremium) {
     const color = catColors[cat] || '#999';
     const div = document.createElement('div');
     div.className = 'stat-card';
+    div.dataset.cat = cat;
+    div.setAttribute('onclick', `toggleCatDetail('${cat}')`);
     div.innerHTML = `<div class="stat-num" style="color:${color}">${icon} ${count}</div><div class="stat-label">${cat}</div>`;
     grid.appendChild(div);
   });
@@ -540,45 +621,59 @@ function renderDeath(coverages) {
   const container = document.getElementById('deathContent');
   const items = getCatCoverages(coverages, '상해');
 
-  const deathItems = items.filter(c => c.cat.sub === '사망장해');
+  const allDeathItems = items.filter(c => c.cat.sub === '사망장해');
+  const deathOnly = allDeathItems.filter(c => c.name.includes('사망') && !c.name.includes('후유장해'));
+  const disabilityOnly = allDeathItems.filter(c => c.name.includes('후유장해') || c.name.includes('장해'));
   const fracItems = items.filter(c => c.cat.sub === '골절화상');
   const rehabItems = items.filter(c => c.cat.sub === '재활');
-  const totalDeath = sumAmounts(deathItems);
+
+  const totalDeath = sumAmounts(deathOnly);
+  const totalDisability = sumAmounts(disabilityOnly);
+  const totalAll = sumAmounts(allDeathItems);
 
   container.innerHTML = `
     <div class="proposal-page">
       ${makePageHeader('🛡️', '사망·장해 보장 한번에 보여주는 스마트제안서', '상해사망·후유장해·골절·화상 보장')}
       <div class="page-body">
-        <div class="highlight-box">
-          <div>
-            <div class="highlight-label">상해 사망 시 보장 합계</div>
-            <div style="font-size:12px; opacity:0.8; margin-top:2px;">상해사망 담보 기준</div>
+        <div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;">
+          <div class="highlight-box" style="flex:1;min-width:140px;">
+            <div>
+              <div class="highlight-label">사망 보장 합계</div>
+              <div style="font-size:11px; opacity:0.8; margin-top:2px;">사망 담보 기준</div>
+            </div>
+            <div class="highlight-amount">${formatManwon(toManwon(totalDeath))}</div>
           </div>
-          <div class="highlight-amount">${formatManwon(toManwon(totalDeath))}</div>
+          <div class="highlight-box" style="flex:1;min-width:140px;background:linear-gradient(135deg,#3300CC,#1A0088);color:white;">
+            <div>
+              <div class="highlight-label" style="color:rgba(255,255,255,0.8);">후유장해 보장 합계</div>
+              <div style="font-size:11px; opacity:0.8; margin-top:2px;">후유장해 담보 기준</div>
+            </div>
+            <div class="highlight-amount">${formatManwon(toManwon(totalDisability))}</div>
+          </div>
         </div>
         <div class="proposal-grid">
           <div class="proposal-col">
-            <div class="col-header" style="background:var(--orange-pale); color:var(--orange); border-bottom-color:var(--orange);">① 사망·장해 보장</div>
-            ${makeCoverageList(deathItems)}
+            <div class="col-header" style="background:var(--orange-pale); color:var(--orange); border-bottom-color:var(--orange);">① 사망 보장</div>
+            ${makeCoverageList(deathOnly)}
             <div class="total-bar">
               <span class="total-label">합계</span>
-              <span class="total-amount">${formatManwon(toManwon(sumAmounts(deathItems)))}</span>
+              <span class="total-amount">${formatManwon(toManwon(totalDeath))}</span>
             </div>
           </div>
           <div class="proposal-col">
-            <div class="col-header blue">② 골절·화상 보장</div>
+            <div class="col-header" style="background:#f0f0ff; color:#3300CC; border-bottom:2px solid #3300CC;">② 후유장해 보장</div>
+            ${makeCoverageList(disabilityOnly)}
+            <div class="total-bar">
+              <span class="total-label">합계</span>
+              <span class="total-amount">${formatManwon(toManwon(totalDisability))}</span>
+            </div>
+          </div>
+          <div class="proposal-col">
+            <div class="col-header blue">③ 골절·화상 보장</div>
             ${makeCoverageList(fracItems)}
             <div class="total-bar">
               <span class="total-label">합계</span>
               <span class="total-amount">${formatManwon(toManwon(sumAmounts(fracItems)))}</span>
-            </div>
-          </div>
-          <div class="proposal-col">
-            <div class="col-header purple">③ 재활 보장</div>
-            ${makeCoverageList(rehabItems)}
-            <div class="total-bar">
-              <span class="total-label">담보 수</span>
-              <span class="total-amount">${rehabItems.length}개</span>
             </div>
           </div>
         </div>
@@ -1101,6 +1196,25 @@ function loadSampleData() {
   alert('샘플 데이터가 입력되었습니다.\n"⚡ 데이터 분석하기" 버튼을 클릭하세요.');
 }
 
+// ===== 캐시 완전 초기화 후 새로고침 =====
+async function hardReload() {
+  try {
+    // 서비스 워커 해제
+    if ('serviceWorker' in navigator) {
+      const regs = await navigator.serviceWorker.getRegistrations();
+      await Promise.all(regs.map(r => r.unregister()));
+    }
+    // Cache Storage 전체 삭제
+    if ('caches' in window) {
+      const keys = await caches.keys();
+      await Promise.all(keys.map(k => caches.delete(k)));
+    }
+  } catch (e) { /* 무시 */ }
+  // 쿼리스트링으로 캐시 우회 강제 리로드
+  const url = location.href.split('?')[0] + '?_r=' + Date.now();
+  location.replace(url);
+}
+
 // ===== 플로팅 새로고침 버튼 드래그 + 코너 스냅 =====
 (function initFloatBtn() {
   document.addEventListener('DOMContentLoaded', () => {
@@ -1172,7 +1286,7 @@ function loadSampleData() {
     function onEnd() {
       if (!dragging) return;
       dragging = false;
-      if (!moved) { location.reload(); return; }
+      if (!moved) { hardReload(); return; }
       const pos = nearestCorner(curLeft + btn.offsetWidth / 2, curTop + btn.offsetHeight / 2);
       applyPos(pos, true);
     }
@@ -1204,6 +1318,9 @@ function loadSampleData() {
     });
   });
 })();
+
+// ===== 탭 QR 초기화 =====
+document.addEventListener('DOMContentLoaded', initTabQRs);
 
 // ===== 초기화 =====
 function clearAll() {
