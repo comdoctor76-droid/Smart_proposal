@@ -231,26 +231,42 @@ function makePageHeader(icon, title, subtitle) {
   const product = document.getElementById('productName').value.trim() || '';
   const payment = document.getElementById('paymentInfo').value.trim() || '';
   const today = new Date().toLocaleDateString('ko-KR');
-  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=70x70&data=${encodeURIComponent(APP_URL)}&margin=2`;
+  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=${encodeURIComponent(APP_URL)}&margin=2`;
 
   return `
-    <div class="page-header" style="position:relative;">
-      <div class="page-header-left" style="flex:1;">
-        <div style="font-size:10px; opacity:0.7; margin-bottom:3px; letter-spacing:1px;">현대해상화재보험 · HYUNDAI MARINE &amp; FIRE INSURANCE</div>
-        <h1 style="font-size:18px;">${icon} ${title}</h1>
-        <div class="subtitle">${subtitle}</div>
-        ${product ? `<div style="margin-top:5px; font-size:11px; opacity:0.85; background:rgba(255,255,255,0.2); padding:3px 8px; border-radius:6px; display:inline-block;">${product}${payment ? ' · ' + payment : ''}</div>` : ''}
-        <div style="margin-top:5px; font-size:10px; opacity:0.75;">※ 본 자료는 보험 상품을 쉽게 이해하기 위해 제작된 것으로 모집용으로 사용 불가</div>
-      </div>
-      <div style="display:flex; align-items:flex-start; gap:12px;">
-        <div class="page-header-right" style="text-align:right;">
-          <div class="customer-name" style="font-size:20px; font-weight:800;">< ${customer} > 고객님</div>
-          ${birth || gender ? `<div style="font-size:12px; opacity:0.85; margin-top:2px;">${birth}${gender ? ' · ' + gender + '성' : ''}</div>` : ''}
-          <div style="font-size:12px; opacity:0.85; margin-top:2px;">${branch ? branch + ' ' : ''}${planner ? planner + ' 플래너' : ''}</div>
-          <div style="margin-top:4px; font-size:11px; opacity:0.8;">${today}</div>
+    <div class="page-header" style="padding:0; flex-direction:column;">
+
+      <!-- 행1: 회사명 + 제목 + 날짜 -->
+      <div style="display:flex; align-items:center; justify-content:space-between; padding:10px 18px 8px; border-bottom:1px solid rgba(255,255,255,0.2);">
+        <div style="font-size:10px; opacity:0.75; letter-spacing:0.8px; white-space:nowrap;">현대해상화재보험</div>
+        <div style="flex:1; text-align:center;">
+          <span style="font-size:17px; font-weight:800; letter-spacing:-0.3px;">${icon} ${title}</span>
+          <div style="font-size:11px; opacity:0.85; margin-top:2px;">${subtitle}</div>
         </div>
-        <img src="${qrUrl}" width="70" height="70" style="border-radius:6px; background:white; padding:2px; flex-shrink:0;" alt="QR" class="print-qr" onerror="this.style.display='none'">
+        <div style="font-size:11px; opacity:0.8; white-space:nowrap;">${today}</div>
       </div>
+
+      <!-- 행2: 고객 정보 -->
+      <div style="display:flex; align-items:center; justify-content:space-between; padding:10px 18px; border-bottom:1px solid rgba(255,255,255,0.2);">
+        <div>
+          <div style="font-size:22px; font-weight:900; letter-spacing:-0.5px;">< ${customer} > 고객님</div>
+          ${birth || gender ? `<div style="font-size:12px; opacity:0.85; margin-top:3px;">${birth}${gender ? ' · ' + gender + '성' : ''}</div>` : ''}
+          <div style="font-size:12px; opacity:0.85; margin-top:2px;">${branch ? branch + ' · ' : ''}${planner ? planner + ' 플래너' : ''}</div>
+        </div>
+        <div style="font-size:11px; opacity:0.75; margin-top:4px; font-size:10px; opacity:0.7; max-width:160px; text-align:right;">※ 본 자료는 보험 상품을 쉽게 이해하기 위해 제작된 것으로 모집용으로 사용 불가</div>
+      </div>
+
+      <!-- 행3: 상품정보 + QR -->
+      <div style="display:flex; align-items:center; justify-content:space-between; padding:8px 18px;">
+        <div style="flex:1;">
+          ${product ? `<div style="font-size:12px; font-weight:700; opacity:0.95;">📌 ${product}</div>` : ''}
+          ${payment ? `<div style="font-size:11px; opacity:0.8; margin-top:2px;">📅 ${payment}</div>` : ''}
+        </div>
+        <a href="${APP_URL}" target="_blank" rel="noopener" style="flex-shrink:0; margin-left:12px;" title="앱 열기 (QR)">
+          <img src="${qrUrl}" width="72" height="72" style="border-radius:6px; background:white; padding:3px; display:block;" alt="QR" onerror="this.parentElement.style.display='none'">
+        </a>
+      </div>
+
     </div>
   `;
 }
