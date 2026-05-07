@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>스마트 제안서 v0.16 | 현대해상화재보험</title>
+<title>스마트 제안서 v0.17 | 현대해상화재보험</title>
 <!-- QR코드 API용 캐시 허용 -->
 <meta http-equiv="Content-Security-Policy" content="img-src * data:;">
 <style>
@@ -167,6 +167,18 @@ body { font-family: 'Malgun Gothic', '맑은 고딕', -apple-system, sans-serif;
 .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 @media (max-width: 600px) { .form-row { grid-template-columns: 1fr; } }
 .form-row .form-group { margin-bottom: 0; }
+/* 고객정보 auto-fit 그리드 (데스크탑) */
+.info-form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(155px, 1fr));
+  gap: 12px;
+  align-items: start;
+}
+.info-form-grid .form-group { margin-bottom: 0; }
+.info-form-full { grid-column: 1 / -1; }
+@media (max-width: 600px) {
+  .info-form-grid { grid-template-columns: 1fr 1fr; }
+}
 
 .form-group { margin-bottom: 16px; }
 .form-label { font-size: 12px; font-weight: 700; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; display: block; }
@@ -635,7 +647,7 @@ body { font-family: 'Malgun Gothic', '맑은 고딕', -apple-system, sans-serif;
       <div class="logo-badge">🛡️</div>
       <div>
         <div class="header-title">스마트 제안서</div>
-        <div class="header-sub">현대해상화재보험 · Smart Proposal System <span style="background:rgba(255,255,255,0.25); padding:1px 7px; border-radius:8px; font-size:10px; margin-left:6px; letter-spacing:0.5px;">v0.16</span></div>
+        <div class="header-sub">현대해상화재보험 · Smart Proposal System <span style="background:rgba(255,255,255,0.25); padding:1px 7px; border-radius:8px; font-size:10px; margin-left:6px; letter-spacing:0.5px;">v0.17</span></div>
       </div>
     </div>
     <div class="header-info">
@@ -752,7 +764,7 @@ body { font-family: 'Malgun Gothic', '맑은 고딕', -apple-system, sans-serif;
         <div class="card-icon">👤</div>
         <h2>고객 & 플래너 정보</h2>
       </div>
-      <div class="form-row" style="margin-bottom:12px;">
+      <div class="info-form-grid">
         <div class="form-group">
           <label class="form-label">고객 이름</label>
           <input type="text" id="customerName" class="form-input" placeholder="홍길동" oninput="updateHeader()">
@@ -761,8 +773,6 @@ body { font-family: 'Malgun Gothic', '맑은 고딕', -apple-system, sans-serif;
           <label class="form-label">생년월일</label>
           <input type="text" id="customerBirth" class="form-input" placeholder="1984.04.01">
         </div>
-      </div>
-      <div class="form-row" style="margin-bottom:12px;">
         <div class="form-group">
           <label class="form-label">성별</label>
           <select id="customerGender" class="form-input">
@@ -775,8 +785,6 @@ body { font-family: 'Malgun Gothic', '맑은 고딕', -apple-system, sans-serif;
           <label class="form-label">플래너 이름</label>
           <input type="text" id="plannerName" class="form-input" placeholder="임현자" oninput="updateHeader()">
         </div>
-      </div>
-      <div class="form-row" style="margin-bottom:12px;">
         <div class="form-group">
           <label class="form-label">지점명</label>
           <input type="text" id="branchName" class="form-input" placeholder="잠실지점">
@@ -785,10 +793,10 @@ body { font-family: 'Malgun Gothic', '맑은 고딕', -apple-system, sans-serif;
           <label class="form-label">납입 방식</label>
           <input type="text" id="paymentInfo" class="form-input" placeholder="20년납 100세만기">
         </div>
-      </div>
-      <div class="form-group">
-        <label class="form-label">상품명</label>
-        <input type="text" id="productName" class="form-input" placeholder="퍼펙트플러스종합보험">
+        <div class="form-group info-form-full">
+          <label class="form-label">상품명</label>
+          <input type="text" id="productName" class="form-input" placeholder="퍼펙트플러스종합보험">
+        </div>
       </div>
     </div>
   </div>

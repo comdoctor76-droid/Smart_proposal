@@ -186,10 +186,28 @@ function toggleCatDetail(cat) {
   const allCards = document.querySelectorAll('.stat-card');
   const clickedCard = document.querySelector(`.stat-card[data-cat="${cat}"]`);
 
+  const grandTotalPrem  = parsedCoverages.reduce((s, c) => s + c.premium, 0);
+  const grandTotalCount = parsedCoverages.length;
+
+  function restoreDefaultSummary() {
+    const s = document.getElementById('premiumSummary');
+    if (!s) return;
+    s.innerHTML = `
+      <div class="premium-item main">
+        <div class="premium-item-label">월 보험료 합계</div>
+        <div class="premium-item-value">${Math.round(grandTotalPrem).toLocaleString()}원</div>
+      </div>
+      <div class="premium-item">
+        <div class="premium-item-label">담보 수</div>
+        <div class="premium-item-value">${grandTotalCount}개</div>
+      </div>`;
+  }
+
   if (panel._activeCat === cat && panel.style.display !== 'none') {
     panel.style.display = 'none';
     panel._activeCat = '';
     allCards.forEach(c => c.classList.remove('active'));
+    restoreDefaultSummary();
     return;
   }
 
@@ -204,24 +222,59 @@ function toggleCatDetail(cat) {
   };
   const color = catColors[cat] || '#999';
   const catCovs = parsedCoverages.filter(c => c.cat && c.cat.cat === cat);
-  const totalAmt = catCovs.reduce((s, c) => s + c.amount, 0);
+  const totalAmt  = catCovs.reduce((s, c) => s + c.amount, 0);
   const totalPrem = catCovs.reduce((s, c) => s + c.premium, 0);
 
-  let rows = catCovs.length === 0
-    ? '<div style="padding:10px 0; color:#999; font-size:13px;">해당 담보가 없습니다.</div>'
-    : catCovs.map(c => `
-        <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid #f5f5f5;gap:8px;">
-          <span style="flex:1;font-size:13px;">${c.name}</span>
-          <span style="font-weight:700;color:${color};white-space:nowrap;font-size:13px;">${formatManwon(toManwon(c.amount))}</span>
-          <span style="color:#999;white-space:nowrap;font-size:12px;">${c.premium.toLocaleString()}원</span>
-        </div>`).join('');
+  // 하단 요약 → 카테고리별 3-박스로 업데이트 (데스크탑에서 3열)
+  const summary = document.getElementById('premiumSummary');
+  if (summary) {
+    summary.innerHTML = `
+      <div class="premium-item main">
+        <div class="premium-item-label">${cat} 보험료 합계</div>
+        <div class="premium-item-value">${Math.round(totalPrem).toLocaleString()}원</div>
+      </div>
+      <div class="premium-item">
+        <div class="premium-item-label">${cat} 담보</div>
+        <div class="premium-item-value">${catCovs.length}개</div>
+      </div>
+      <div class="premium-item">
+        <div class="premium-item-label">월 보험료 합계</div>
+        <div class="premium-item-value">${Math.round(grandTotalPrem).toLocaleString()}원</div>
+      </div>`;
+  }
+
+  // 담보 목록 — 표 형태로 컬럼 정렬
+  let rowsHtml;
+  if (catCovs.length === 0) {
+    rowsHtml = '<div style="padding:10px 0;color:#999;font-size:13px;">해당 담보가 없습니다.</div>';
+  } else {
+    rowsHtml = `
+      <table style="width:100%;border-collapse:collapse;">
+        <thead>
+          <tr>
+            <th style="text-align:left;padding:4px 8px 6px 0;font-size:10px;color:#bbb;font-weight:600;border-bottom:1px solid #eee;">담보명</th>
+            <th style="text-align:right;padding:4px 0 6px;font-size:10px;color:#bbb;font-weight:600;border-bottom:1px solid #eee;white-space:nowrap;width:80px;">보장금액</th>
+            <th style="text-align:right;padding:4px 0 6px 12px;font-size:10px;color:#bbb;font-weight:600;border-bottom:1px solid #eee;white-space:nowrap;width:90px;">월 보험료</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${catCovs.map(c => `
+            <tr>
+              <td style="padding:6px 8px 6px 0;font-size:13px;border-bottom:1px solid #f5f5f5;word-break:keep-all;">${c.name}</td>
+              <td style="padding:6px 0;text-align:right;font-weight:700;color:${color};white-space:nowrap;font-size:13px;border-bottom:1px solid #f5f5f5;">${formatManwon(toManwon(c.amount))}</td>
+              <td style="padding:6px 0 6px 12px;text-align:right;color:#999;white-space:nowrap;font-size:12px;border-bottom:1px solid #f5f5f5;">${c.premium.toLocaleString()}원</td>
+            </tr>`).join('')}
+        </tbody>
+      </table>`;
+  }
 
   panel.innerHTML = `
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
-      <span style="font-weight:700;font-size:14px;color:${color};">${CAT_ICONS[cat]||'📋'} ${cat} 담보 (${catCovs.length}개)</span>
-      <span style="font-size:12px;color:#666;">월 보험료 ${Math.round(totalPrem).toLocaleString()}원</span>
+    <div style="display:flex;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:10px;">
+      <span style="font-weight:700;font-size:14px;color:${color};">${CAT_ICONS[cat]||'📋'} ${cat} 담보 ${catCovs.length}개</span>
+      <span style="font-size:12px;color:#888;">보장금액 합계 <strong style="color:${color};">${formatManwon(toManwon(totalAmt))}</strong></span>
+      <span style="font-size:12px;color:#888;">${cat} 보험료 <strong style="color:#555;">${Math.round(totalPrem).toLocaleString()}원</strong></span>
     </div>
-    ${rows}`;
+    ${rowsHtml}`;
   panel.style.display = 'block';
   panel.style.animation = 'none';
   requestAnimationFrame(() => { panel.style.animation = 'slideDown 0.25s ease'; });
