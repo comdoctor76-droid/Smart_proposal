@@ -460,13 +460,20 @@ function renderAllinone(coverages) {
   let sectHtml = '';
   cats.forEach(cat => {
     const items = getCatCoverages(coverages, cat);
+    const sid = 'ao' + (++_colSec);
+    const total = sumAmounts(items);
+    const totalStr = total > 0 ? formatManwon(toManwon(total)) : items.length + '개';
     sectHtml += `
       <div class="coverage-section">
-        <div class="section-title ${catColors[cat]||''}">
-          ${catIcons[cat]} ${cat} 담보
-          <span style="margin-left:auto;font-size:12px;font-weight:400;">${items.length}개</span>
+        <div class="section-title ${catColors[cat]||''}"
+             onclick="toggleColSection('${sid}')"
+             style="cursor:pointer;justify-content:space-between;user-select:none;">
+          <span>${catIcons[cat]} ${cat} 담보 총 ${totalStr}</span>
+          <span id="${sid}_a" style="font-size:10px;transition:transform 0.25s;display:inline-block;">▼</span>
         </div>
-        <div class="coverage-list">${makeCoverageList(items)}</div>
+        <div id="${sid}" style="display:none;">
+          <div class="coverage-list">${makeCoverageList(items)}</div>
+        </div>
       </div>`;
   });
 
