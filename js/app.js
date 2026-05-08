@@ -1916,15 +1916,124 @@ function renderDetailTable(items) {
 
 // ===== 인쇄 =====
 function printSection(section) {
+  const isMobile = window.innerWidth < 769 || /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+  if (isMobile) { showMobilePrintPopup(section); return; }
+
   const prevActive = document.querySelector('.tab-content.active');
+  const prevId = prevActive ? prevActive.id.replace('content-', '') : null;
   switchTab(section);
+
   setTimeout(() => {
+    // A4 print area (210mm × 297mm at 96dpi, no margins)
+    const A4W = 794, A4H = 1123;
+    const pages = document.querySelectorAll('#content-' + section + ' .proposal-page');
+    const savedZooms = [];
+
+    pages.forEach(p => {
+      savedZooms.push(p.style.zoom || '');
+      const scale = Math.min(A4W / p.scrollWidth, A4H / p.scrollHeight, 1);
+      p.style.zoom = parseFloat(scale.toFixed(3));
+    });
+
     window.print();
-    if (prevActive) {
-      const id = prevActive.id.replace('content-', '');
-      setTimeout(() => switchTab(id), 500);
-    }
-  }, 300);
+
+    setTimeout(() => {
+      pages.forEach((p, i) => { p.style.zoom = savedZooms[i]; });
+      if (prevId) setTimeout(() => switchTab(prevId), 100);
+    }, 1000);
+  }, 400);
+}
+
+function showMobilePrintPopup(section) {
+  document.getElementById('mobilePrintOverlay')?.remove();
+
+  const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+  const canShare = !!navigator.share;
+
+  const overlay = document.createElement('div');
+  overlay.id = 'mobilePrintOverlay';
+  Object.assign(overlay.style, {
+    position: 'fixed', inset: '0', zIndex: '10000',
+    background: 'rgba(0,0,0,0.55)',
+    display: 'flex', alignItems: 'flex-end', justifyContent: 'center'
+  });
+
+  const pdfHint = isIOS
+    ? '공유(↑) → 파일에 저장 또는 프린트 선택'
+    : '메뉴 → 인쇄 → PDF로 저장 선택';
+
+  overlay.innerHTML = `
+    <div style="background:white;border-radius:20px 20px 0 0;padding:24px 20px 32px;
+        width:100%;max-width:480px;font-family:inherit;">
+      <div style="width:36px;height:4px;background:#ddd;border-radius:2px;margin:0 auto 20px;"></div>
+      <h3 style="font-size:18px;font-weight:800;margin:0 0 4px;color:#1a1a2e;">📄 PDF 저장 / 공유</h3>
+      <p style="font-size:13px;color:#888;margin:0 0 20px;line-height:1.5;">
+        제안서를 PDF로 저장하거나 다른 기기·앱으로 전송할 수 있습니다.
+      </p>
+
+      <button id="mpBtnPdf" style="
+          display:flex;align-items:center;gap:14px;width:100%;
+          padding:16px;margin-bottom:10px;
+          background:#F05A22;color:white;border:none;border-radius:14px;
+          font-size:15px;font-weight:700;cursor:pointer;text-align:left;">
+        <span style="font-size:26px;">🖨️</span>
+        <div>
+          <div>PDF로 저장</div>
+          <div style="font-size:11px;font-weight:400;opacity:0.85;margin-top:2px;">${pdfHint}</div>
+        </div>
+      </button>
+
+      ${canShare ? `
+      <button id="mpBtnShare" style="
+          display:flex;align-items:center;gap:14px;width:100%;
+          padding:16px;margin-bottom:10px;
+          background:#4F46E5;color:white;border:none;border-radius:14px;
+          font-size:15px;font-weight:700;cursor:pointer;text-align:left;">
+        <span style="font-size:26px;">📤</span>
+        <div>
+          <div>링크 공유</div>
+          <div style="font-size:11px;font-weight:400;opacity:0.85;margin-top:2px;">
+            카카오톡 · 메일 · AirDrop 등으로 전송
+          </div>
+        </div>
+      </button>` : ''}
+
+      <button id="mpBtnCancel" style="
+          width:100%;padding:14px;margin-top:4px;
+          background:#f3f4f6;color:#555;border:none;border-radius:14px;
+          font-size:14px;font-weight:600;cursor:pointer;">
+        취소
+      </button>
+    </div>`;
+
+  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+  document.body.appendChild(overlay);
+
+  document.getElementById('mpBtnPdf').addEventListener('click', () => {
+    overlay.remove();
+    const prevActive = document.querySelector('.tab-content.active');
+    const prevId = prevActive ? prevActive.id.replace('content-', '') : null;
+    switchTab(section);
+    setTimeout(() => {
+      window.print();
+      if (prevId) setTimeout(() => switchTab(prevId), 800);
+    }, 300);
+  });
+
+  document.getElementById('mpBtnCancel').addEventListener('click', () => overlay.remove());
+
+  if (canShare) {
+    document.getElementById('mpBtnShare').addEventListener('click', async () => {
+      overlay.remove();
+      try {
+        await navigator.share({
+          title: '스마트 제안서 | 현대해상화재보험',
+          text: '현대해상화재보험 맞춤 보험 제안서입니다.',
+          url: window.location.href
+        });
+      } catch (_) { /* 취소 또는 미지원 */ }
+    });
+  }
 }
 
 // ===== 샘플 데이터 =====

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>스마트 제안서 v0.25 | 현대해상화재보험</title>
+<title>스마트 제안서 v0.26 | 현대해상화재보험</title>
 <!-- QR코드 API용 캐시 허용 -->
 <meta http-equiv="Content-Security-Policy" content="img-src * data:;">
 <style>
@@ -495,35 +495,30 @@ body { font-family: 'Malgun Gothic', '맑은 고딕', -apple-system, sans-serif;
 /* ===== 인쇄 스타일 ===== */
 @page { size: A4 portrait; margin: 10mm; }
 @media print {
-  .header, .nav-tabs, .print-controls, .btn-group, #floatRefreshBtn { display: none !important; }
+  @page { size: A4 portrait; margin: 0; }
+  .header, .nav-tabs, .print-controls, .btn-group, #floatRefreshBtn,
+  #mobilePrintOverlay { display: none !important; }
   .main-content { padding: 0; max-width: 100%; }
   .tab-content { display: none !important; }
   .tab-content.active { display: block !important; }
-  /* 인쇄 시 헤더 카드 다시 표시 */
   .page-header { display: flex !important; flex-direction: column !important; }
+  html, body { margin: 0; padding: 0; background: white; }
+  .card { box-shadow: none; }
   .proposal-page {
-    box-shadow: none;
-    border: none;
+    box-shadow: none !important;
+    border: none !important;
+    border-radius: 0 !important;
+    margin: 0 !important;
+    overflow: hidden !important;
     page-break-after: always;
     break-after: page;
-    width: 190mm;
-    min-height: 267mm;
-    font-size: 15px;
-    margin: 0;
-    border-radius: 0;
+    /* JS가 인쇄 전 zoom 인라인으로 설정 */
   }
   .proposal-page:last-child { page-break-after: avoid; break-after: avoid; }
-  .page-body { padding: 12px 16px; }
-  .page-header { padding: 12px 16px; }
-  .page-header-left h1 { font-size: 16px; }
-  .coverage-item { padding: 5px 10px; font-size: 15px; }
-  .proposal-grid { font-size: 15px; }
-  body { background: white; }
-  .card { box-shadow: none; }
+  .page-body { padding: 8px 12px; }
+  .page-header { padding: 8px 12px; }
   .highlight-box { padding: 10px 14px; }
-  .highlight-amount { font-size: 20px; }
   .print-qr { display: block !important; }
-  /* 올인원: 화면용 숨기고 인쇄용만 표시 */
   .allinone-screen-view { display: none !important; }
 }
 /* 올인원: 인쇄용은 화면에서 숨김 */
@@ -691,7 +686,7 @@ body { font-family: 'Malgun Gothic', '맑은 고딕', -apple-system, sans-serif;
       <div class="logo-badge">🛡️</div>
       <div>
         <div class="header-title">스마트 제안서</div>
-        <div class="header-sub">현대해상화재보험 · Smart Proposal System <span style="background:rgba(255,255,255,0.25); padding:1px 7px; border-radius:8px; font-size:10px; margin-left:6px; letter-spacing:0.5px;">v0.25</span></div>
+        <div class="header-sub">현대해상화재보험 · Smart Proposal System <span style="background:rgba(255,255,255,0.25); padding:1px 7px; border-radius:8px; font-size:10px; margin-left:6px; letter-spacing:0.5px;">v0.26</span></div>
       </div>
     </div>
     <div class="header-info">
