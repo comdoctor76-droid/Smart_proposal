@@ -500,86 +500,237 @@ function renderAllinone(coverages) {
   const totalPremium = sumPremiums(coverages);
   const today = new Date().toLocaleDateString('ko-KR');
 
-  // ══════════════════════════════════════════════════
-  // 화면용 레이아웃 — 기존 카테고리별 담보 목록 유지
-  // ══════════════════════════════════════════════════
-  const cats = ['암', '뇌', '심', '상해', '운전자', '수술', '입원일당'];
-  const catColors = {
-    '암': '', '뇌': 'section-title-brain', '심': 'section-title-heart',
-    '수술': 'section-title-surgery', '입원일당': 'section-title-daily',
-    '상해': 'section-title-injury', '운전자': 'section-title-driver'
-  };
-  const catIcons = { '암':'🔬','뇌':'🧠','심':'❤️','상해':'🦴','운전자':'🚗','수술':'⚕️','입원일당':'🏥' };
-  let sectHtml = '';
-  cats.forEach(cat => {
-    const items = getCatCoverages(coverages, cat);
-    const sid = 'ao' + (++_colSec);
-    const total = sumAmounts(items);
-    const totalStr = total > 0 ? formatManwon(toManwon(total)) : items.length + '개';
-    sectHtml += `
-      <div class="coverage-section">
-        <div class="section-title ${catColors[cat]||''}"
-             onclick="toggleColSection('${sid}')"
-             style="cursor:pointer;justify-content:space-between;user-select:none;">
-          <span>${catIcons[cat]} ${cat} 담보 총 ${totalStr}</span>
-          <span id="${sid}_a" style="font-size:10px;transition:transform 0.25s;display:inline-block;">▼</span>
-        </div>
-        <div id="${sid}" style="display:none;">
-          <div class="coverage-list">${makeCoverageList(items)}</div>
-        </div>
-      </div>`;
-  });
+  // 키워드 검색 → 금액 포맷
+  function byKw(...kws) {
+    return coverages.filter(c => kws.some(kw => c.name.includes(kw)));
+  }
+  function fmtAmt(color, ...kws) {
+    const total = sumAmounts(byKw(...kws));
+    if (!total) return `<span style="color:#bbb;font-size:10px;">미가입</span>`;
+    return `<strong style="color:${color};font-size:14px;">${formatManwon(toManwon(total))}</strong>`;
+  }
 
-  const screenView = `
+  // 치료 섹션 빌더
+  function makeSection(num, title, subtitle, leftImg, cols, rows, notes) {
+    const C = '#FF8800', BG = '#FFF8EE';
+    const cw = Math.floor(82 / cols.length);
+    const thCells = cols.map(c => `
+      <th style="text-align:center;padding:5px 3px;background:${C};border-left:1px solid rgba(255,255,255,0.25);vertical-align:top;">
+        <div style="display:inline-block;background:#1a3080;color:white;font-weight:900;font-size:10px;
+            padding:2px 8px;border-radius:3px;white-space:nowrap;margin-bottom:4px;">${c.label}</div>
+        <div><img src="${c.img}" style="width:70px;height:54px;object-fit:cover;border-radius:3px;display:block;margin:0 auto 3px;"></div>
+        <div style="font-size:8px;color:rgba(255,255,255,0.9);line-height:1.3;">${c.desc}</div>
+      </th>`).join('');
+
+    const tbRows = rows.map((r, ri) => {
+      const bg = ri % 2 ? `background:${BG};` : '';
+      const cells = cols.map(c => {
+        const val = r.perCol ? fmtAmt(C, ...c.kws) : fmtAmt(C, ...r.kws);
+        return `<td style="text-align:center;padding:6px 4px;border-left:1px solid #FF880033;${bg}">${val}</td>`;
+      }).join('');
+      return `<tr>
+        <td style="padding:5px 12px;font-size:10px;font-weight:800;color:#555;white-space:nowrap;${bg}">▶ ${r.label}</td>
+        ${cells}
+      </tr>`;
+    }).join('');
+
+    const noteHtml = notes.map(n =>
+      `<div style="background:${BG};padding:3px 10px;font-size:8px;color:#666;border-top:1px solid #FF880022;">※ ${n}</div>`
+    ).join('');
+
+    return `
+      <div style="border:2px solid ${C};border-radius:6px;margin-bottom:8px;overflow:hidden;">
+        <div style="background:${C};color:white;padding:6px 13px;display:flex;align-items:center;gap:9px;">
+          <span style="background:white;color:${C};font-weight:900;border-radius:50%;
+              width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center;
+              flex-shrink:0;font-size:12px;">${num}</span>
+          <span style="font-size:16px;font-weight:900;">${title}</span>
+          ${subtitle ? `<span style="margin-left:auto;font-size:9px;opacity:0.92;font-weight:400;text-align:right;">| ${subtitle}</span>` : ''}
+        </div>
+        <table style="width:100%;border-collapse:collapse;table-layout:fixed;">
+          <colgroup>
+            <col style="width:18%">
+            ${cols.map(() => `<col style="width:${cw}%">`).join('')}
+          </colgroup>
+          <thead>
+            <tr style="border-bottom:2px solid ${C}99;">
+              <th style="background:${BG};text-align:center;padding:8px 4px;vertical-align:middle;">
+                <img src="${leftImg}" style="width:78px;height:68px;object-fit:contain;">
+              </th>
+              ${thCells}
+            </tr>
+          </thead>
+          <tbody>${tbRows}</tbody>
+        </table>
+        ${noteHtml}
+      </div>`;
+  }
+
+  // ① 암
+  const sec1 = makeSection('①', '암에 걸려도!', '암 진단 + 수술 + 항암치료 보장',
+    'images/allinone_0.png',
+    [
+      { label:'다빈치로봇',   img:'images/allinone_1.png', desc:'비급여(전액본인부담)시', kws:['다빈치로봇'] },
+      { label:'표적항암치료', img:'images/allinone_2.png', desc:'비급여(전액본인부담)시', kws:['표적항암'] },
+      { label:'면역항암치료', img:'images/allinone_3.png', desc:'비급여(전액본인부담)시', kws:['카티(CAR-T)','면역항암'] },
+      { label:'양성자치료',   img:'images/allinone_4.png', desc:'비급여(전액본인부담)시', kws:['양성자'] },
+    ],
+    [
+      { label:'연1회 반복 보장', perCol:true },
+      { label:'통원치료비',       perCol:false, kws:['암통원'] },
+    ],
+    [
+      '치료 예약시 최대 1,500만원 선지급 해드리고, 치료 종료 후 추가 지급',
+      '상급종합병원에서 일반암으로 치료하는 경우의 보상 예시이며, 병원급 및 갑상선/생식기암등의 세부 보장은 약관내용을 참조',
+    ]
+  );
+
+  // ② 뇌혈관
+  const sec2 = makeSection('②', '뇌혈관질환에 걸려도!', '뇌출혈 + 뇌경색 + 경동맥협착 + 뇌동맥류 등',
+    'images/brain_left.png',
+    [
+      { label:'혈전용해치료',       img:'images/brain_thrombolysis.png', desc:'혈관에 주사하는 약물치료',  kws:['혈전용해치료비'] },
+      { label:'혈전제거치료',       img:'images/brain_catheter.png',     desc:'카테터로 혈전을 직접 제거', kws:['심뇌혈관질환주요치료비'] },
+      { label:'신의료수술(비관혈)', img:'images/brain_stent.png',        desc:'스텐트삽입, 코일색전술 등', kws:['심뇌혈관질환수술'] },
+      { label:'개두수술(관혈)',     img:'images/brain_craniotomy.png',   desc:'클립결찰술, 개두술 등',     kws:['심뇌혈관질환수술'] },
+    ],
+    [
+      { label:'연1회 반복 보장', perCol:true },
+      { label:'중환자실 1일이상', perCol:false, kws:['심뇌혈관수술입원일당','심뇌혈관입원일당'] },
+    ],
+    ['치료 예약시 최대 500만원 선지급 해드리고, 치료 종료 후 추가 지급']
+  );
+
+  // ③ 심혈관
+  const sec3 = makeSection('③', '심혈관질환에 걸려도!', '협심증 + 심근경색 + 부정맥 + 심장판막질환 + 심부전 등',
+    'images/heart_left.png',
+    [
+      { label:'혈전용해치료', img:'images/heart_thrombolysis.png', desc:'혈관에 주사하는 약물치료',  kws:['혈전용해치료비'] },
+      { label:'관상동맥수술', img:'images/heart_coronary.png',    desc:'스텐트삽입술, 풍선확장술', kws:['허혈심장질환수술','심뇌혈관질환수술'] },
+      { label:'부정맥수술',   img:'images/heart_arrhythmia.png',  desc:'고주파전극도자/생동시술', kws:['인공심박동기','이식형제세동기','항응고제'] },
+      { label:'심장수술',     img:'images/heart_surgery.png',     desc:'인공심박동기 삽입술 등',  kws:['심뇌혈관질환수술','심뇌혈관질환주요치료비'] },
+    ],
+    [
+      { label:'연1회 반복 보장', perCol:true },
+      { label:'중환자실 1일이상', perCol:false, kws:['심뇌혈관수술입원일당','심뇌혈관입원일당'] },
+    ],
+    ['치료 예약시 최대 500만원 선지급 해드리고, 치료 종료 후 추가 지급']
+  );
+
+  // ④ 치매 + ⑤ 간병인
+  const d1 = fmtAmt('#8833BB', '치매주요치료비');
+  const c1 = fmtAmt('#228844', '간병인사용질병입원일당', '간병인사용입원일당');
+  const c2 = fmtAmt('#228844', '간호간병통합서비스');
+
+  const sec45 = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+      <div style="border:2px solid #8833BB;border-radius:6px;overflow:hidden;">
+        <div style="background:#8833BB;color:white;padding:5px 12px;display:flex;align-items:center;gap:8px;">
+          <span style="background:white;color:#8833BB;border-radius:50%;width:22px;height:22px;
+              display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;flex-shrink:0;">④</span>
+          <span style="font-size:14px;font-weight:900;">치매에 걸려도!</span>
+        </div>
+        <div style="padding:8px 10px;background:#F9F0FF;">
+          <div style="font-size:9px;color:#444;line-height:1.6;margin-bottom:6px;
+              border-left:3px solid #8833BB;padding-left:7px;">
+            <strong style="color:#8833BB;">레켐비</strong>, 알츠하이머병의 주요 원인물질인 아밀로이드 베타(Aβ)를 제거하는
+            기전의 치료제. 치매 진행을 8년 지연시키는 것으로 임상에서 확인.
+          </div>
+          <div style="display:flex;gap:5px;margin-bottom:7px;font-size:9px;">
+            <div style="flex:1;text-align:center;background:#EEE0FF;padding:3px 4px;border-radius:4px;color:#8833BB;font-weight:700;">최초+7회+19회</div>
+            <div style="color:#888;align-self:center;font-weight:700;">+</div>
+            <div style="flex:1;text-align:center;background:#EEE0FF;padding:3px 4px;border-radius:4px;color:#8833BB;font-weight:700;">매회(최대 36회)</div>
+          </div>
+          <table style="width:100%;border-collapse:collapse;font-size:10px;border-top:2px solid #8833BB;">
+            <tr>
+              <td style="padding:5px 8px;font-weight:800;color:#8833BB;width:55%;">레켐비 치료시 ▶</td>
+              <td style="text-align:center;padding:5px 8px;">${d1}</td>
+            </tr>
+          </table>
+        </div>
+      </div>
+      <div style="border:2px solid #228844;border-radius:6px;overflow:hidden;">
+        <div style="background:#228844;color:white;padding:5px 12px;display:flex;align-items:center;gap:8px;">
+          <span style="background:white;color:#228844;border-radius:50%;width:22px;height:22px;
+              display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;flex-shrink:0;">⑤</span>
+          <span style="font-size:14px;font-weight:900;">간병인을 사용해도!</span>
+        </div>
+        <div style="padding:8px 10px;background:#F0FFF5;">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:7px;">
+            <img src="images/caregiver.png" style="width:62px;height:54px;object-fit:contain;flex-shrink:0;">
+            <div style="font-size:9px;color:#444;line-height:1.7;">
+              상해/질병으로 입원하여<br>
+              <strong style="color:#228844;font-size:10px;">간병인을 사용하면</strong><br>
+              (하루 8만원 이상 사용시 100%)
+            </div>
+          </div>
+          <table style="width:100%;border-collapse:collapse;font-size:10px;border-top:2px solid #228844;">
+            <tr>
+              <td style="padding:5px 8px;font-weight:800;color:#228844;width:50%;">1~180일 보장 ▶</td>
+              <td style="text-align:center;padding:5px 8px;">${c1} <span style="font-size:8px;color:#888;">1일당</span></td>
+            </tr>
+            <tr style="background:#E0FFE8;">
+              <td style="padding:5px 8px;font-weight:800;color:#228844;">181~365일 보장 ▶</td>
+              <td style="text-align:center;padding:5px 8px;">${c2} <span style="font-size:8px;color:#888;">1일당</span></td>
+            </tr>
+          </table>
+        </div>
+      </div>
+    </div>`;
+
+  // 페이지 헤더
+  const pageHeader = `
+    <div style="border-bottom:3px solid #FF8800;margin-bottom:10px;padding-bottom:8px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px;">
+        <div style="display:flex;align-items:center;gap:7px;">
+          <div style="background:#FF8800;color:white;font-weight:900;font-size:13px;
+              padding:3px 9px;border-radius:3px;letter-spacing:1px;">H</div>
+          <span style="font-weight:900;font-size:13px;color:#333;">현대해상</span>
+        </div>
+        <span style="font-size:8px;color:#777;max-width:62%;text-align:right;">
+          본 자료는 모집자 교육용으로 제작되었으며, 이해를 돕기 위한 예시로써 실제 보험금 지급을 보장하는 것은 아닙니다
+        </span>
+      </div>
+      <div style="display:flex;align-items:center;gap:14px;margin-bottom:6px;">
+        <div style="border:2.5px solid #FF8800;padding:4px 14px;border-radius:5px;
+            display:inline-flex;align-items:center;gap:7px;">
+          <span style="color:#666;font-size:13px;font-weight:700;">치료보장</span>
+          <span style="color:#111;font-size:20px;font-weight:900;">스마트 제안서</span>
+        </div>
+        <span style="font-size:16px;font-weight:900;color:#FF8800;">통합치료비 플랜</span>
+        <span style="margin-left:auto;font-size:9px;color:#999;">${today}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;
+          background:#FFF8F0;padding:6px 14px;border-radius:5px;border:1.5px solid #FFD090;">
+        <span style="font-size:12px;font-weight:700;color:#333;">
+          [ ${customer} 고객님 ] ${product}${payment ? ' · ' + payment : ''}
+        </span>
+        <span style="font-size:13px;font-weight:900;color:#FF8800;border:1.5px solid #FF8800;
+            padding:3px 12px;border-radius:4px;white-space:nowrap;">
+          보험료 : ${Math.round(totalPremium).toLocaleString()}원
+        </span>
+      </div>
+    </div>`;
+
+  const content = `
+    <div style="padding:12px 15px 10px;font-size:11px;">
+      ${pageHeader}
+      ${sec1}
+      ${sec2}
+      ${sec3}
+      ${sec45}
+      <div style="font-size:8px;color:#999;border-top:1px solid #eee;padding-top:5px;margin-top:2px;">
+        ⚠️ 위 보장내용은 실제 증권 내용과 다를 수 있으며, 정확한 내용은 보험증권을 확인해 주시기 바랍니다.
+      </div>
+    </div>`;
+
+  container.innerHTML = `
     <div class="allinone-screen-view">
-      <div class="proposal-page">
-        ${makePageHeader('📊', "안 보이는 '내 보험'을 한눈에 보여주는 스마트제안서", '내 보험 전체 보장 한눈에')}
-        <div class="page-body">
-          <div style="display:flex;justify-content:flex-end;margin-bottom:12px;font-size:12px;color:var(--text-light);">
-            <span>월 납입 보험료 합계 <strong style="color:var(--orange);font-size:14px;">${Math.round(totalPremium).toLocaleString()}원</strong></span>
-          </div>
-          <div class="allinone-grid">${sectHtml}</div>
-          <div class="notice-box" style="margin-top:16px;">
-            ⚠️ 위 보장내용은 실제 증권 내용과 다를 수 있으며, 정확한 내용은 보험증권을 확인해 주시기 바랍니다.
-          </div>
-        </div>
-      </div>
-    </div>`;
-
-  // ══════════════════════════════════════════════════
-  // 인쇄 전용 레이아웃 — v0.13 기준 초기화 (재설계 대기)
-  // ══════════════════════════════════════════════════
-  let printSectHtml = '';
-  cats.forEach(cat => {
-    const items = getCatCoverages(coverages, cat);
-    if (!items.length) return;
-    printSectHtml += `
-      <div class="coverage-section">
-        <div class="section-title ${catColors[cat]||''}">
-          ${catIcons[cat]} ${cat} 담보
-          <span style="margin-left:auto;font-size:12px;font-weight:400;">${items.length}개</span>
-        </div>
-        <div class="coverage-list">${makeCoverageList(items)}</div>
-      </div>`;
-  });
-
-  const printView = `
+      <div class="proposal-page">${content}</div>
+    </div>
     <div class="allinone-print-view">
-      <div class="proposal-page">
-        ${makePageHeader('📊', "안 보이는 '내 보험'을 한눈에 보여주는 스마트제안서", '내 보험 전체 보장 한눈에')}
-        <div class="page-body">
-          <div style="display:flex;justify-content:flex-end;margin-bottom:12px;font-size:12px;color:var(--text-light);">
-            <span>월 납입 보험료 합계 <strong style="color:var(--orange);font-size:14px;">${Math.round(totalPremium).toLocaleString()}원</strong></span>
-          </div>
-          <div class="allinone-grid">${printSectHtml}</div>
-          <div class="notice-box" style="margin-top:16px;">
-            ⚠️ 위 보장내용은 실제 증권 내용과 다를 수 있으며, 정확한 내용은 보험증권을 확인해 주시기 바랍니다.
-          </div>
-        </div>
-      </div>
+      <div class="proposal-page">${content}</div>
     </div>`;
-
-  container.innerHTML = screenView + printView;
 }
 
 // ===== 암 보장 렌더링 =====
