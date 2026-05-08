@@ -570,7 +570,7 @@ function renderAllinone(coverages) {
           border-left:1px solid rgba(255,255,255,0.3);font-weight:normal;vertical-align:top;">
         <div style="display:inline-block;background:rgba(0,0,0,0.22);color:white;font-weight:800;
             font-size:9px;padding:1px 5px;border-radius:2px;white-space:nowrap;">${c.label}</div>
-        <div style="font-size:22px;margin:3px 0;">${c.icon}</div>
+        <div style="margin:3px 0;line-height:1;">${c.icon}</div>
         <div style="font-size:8px;opacity:0.9;line-height:1.3;">${c.desc}</div>
       </th>`).join('');
 
@@ -605,7 +605,7 @@ function renderAllinone(coverages) {
           <thead>
             <tr style="border-bottom:2px solid ${hColor}66;">
               <th style="background:${bgColor};text-align:center;padding:6px 3px;font-weight:normal;">
-                <div style="font-size:28px;">${leftIcon}</div>
+                <div style="line-height:1;">${leftIcon}</div>
               </th>
               ${thCells}
             </tr>
@@ -618,12 +618,13 @@ function renderAllinone(coverages) {
 
   // ① 암
   const pCancer = makePrintSection(
-    '①', '#DD6600', '#FFF8EE', '암에 걸려도!', '암 진단 + 수술 + 항암치료 보장', '🔬',
+    '①', '#DD6600', '#FFF8EE', '암에 걸려도!', '암 진단 + 수술 + 항암치료 보장',
+    '<img src="images/allinone_0.png" style="width:80px;height:auto;border-radius:4px;">',
     [
-      { icon:'🤖', label:'다빈치로봇',   desc:'비급여(전액본인부담)시', kws:['다빈치로봇'] },
-      { icon:'💊', label:'표적항암치료', desc:'비급여(전액본인부담)시', kws:['표적항암'] },
-      { icon:'🧬', label:'면역항암치료', desc:'비급여(전액본인부담)시', kws:['카티(CAR-T)','면역항암'] },
-      { icon:'☢️', label:'양성자치료',   desc:'비급여(전액본인부담)시', kws:['양성자'] },
+      { icon:'<img src="images/allinone_1.png" style="width:60px;height:auto;border-radius:3px;">', label:'다빈치로봇',   desc:'비급여(전액본인부담)시', kws:['다빈치로봇'] },
+      { icon:'<img src="images/allinone_2.png" style="width:60px;height:auto;border-radius:3px;">', label:'표적항암치료', desc:'비급여(전액본인부담)시', kws:['표적항암'] },
+      { icon:'<img src="images/allinone_3.png" style="width:60px;height:auto;border-radius:3px;">', label:'면역항암치료', desc:'비급여(전액본인부담)시', kws:['카티(CAR-T)','면역항암'] },
+      { icon:'<img src="images/allinone_4.png" style="width:60px;height:auto;border-radius:3px;">', label:'양성자치료',   desc:'비급여(전액본인부담)시', kws:['양성자'] },
     ],
     [
       { label:'연1회 반복 보장 ▶', perCol:true },
