@@ -733,93 +733,289 @@ function renderAllinone(coverages) {
     </div>`;
 }
 
+// ===== 치료보장 스마트 제안서 공통 헬퍼 =====
+
+function makeSmartTabHdr(tabTitle, customer, product, payment, totalPremium, today) {
+  return `
+    <div style="border-bottom:3px solid #FF8800;margin-bottom:10px;padding-bottom:8px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px;">
+        <span style="font-size:8px;color:#777;max-width:62%;">
+          본 자료는 모집자 교육용으로 제작되었으며, 이해를 돕기 위한 예시로써 실제 보험금 지급을 보장하는 것은 아닙니다
+        </span>
+        <div style="display:flex;align-items:center;gap:5px;">
+          <div style="background:#FF8800;color:white;font-weight:900;font-size:13px;padding:2px 7px;border-radius:3px;">H</div>
+          <span style="font-weight:900;font-size:12px;color:#333;">현대해상</span>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
+        <div style="border:2px solid #FF8800;padding:3px 10px;border-radius:4px;display:inline-flex;align-items:center;gap:6px;">
+          <span style="color:#666;font-size:11px;font-weight:700;">치료보장</span>
+          <span style="color:#111;font-size:16px;font-weight:900;">스마트 제안서</span>
+        </div>
+        <span style="font-size:14px;font-weight:900;color:#FF8800;">${tabTitle}</span>
+        <span style="margin-left:auto;font-size:9px;color:#999;">${today}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;
+          background:#FFF8F0;padding:5px 12px;border-radius:5px;border:1.5px solid #FFD090;">
+        <span style="font-size:11px;font-weight:700;color:#333;">
+          [ ${customer} 고객님 ] ${product}${payment ? ' · ' + payment : ''}
+        </span>
+        <span style="font-size:12px;font-weight:900;color:#FF8800;border:1.5px solid #FF8800;
+            padding:2px 10px;border-radius:4px;white-space:nowrap;">
+          보험료 : ${Math.round(totalPremium).toLocaleString()}원
+        </span>
+      </div>
+    </div>`;
+}
+
+function makeSmartEnroll(tabId, enrollCols, fmtA, fmtP, note) {
+  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=${encodeURIComponent(TAB_QR_URLS[tabId]||APP_URL)}&margin=2`;
+  const qrClick = `openTabQR('${tabId}')`;
+  const colCount = enrollCols.length;
+  const colW = Math.floor(72 / colCount);
+  const thCells = enrollCols.map(c =>
+    `<th style="text-align:center;padding:4px 3px;font-size:10px;border-left:1px solid rgba(255,255,255,0.2);">${c.label}</th>`
+  ).join('');
+  const amtCells = enrollCols.map(c =>
+    `<td style="text-align:center;padding:4px 3px;border-left:1px solid #CDD5E8;">${fmtA(c.kws)}</td>`
+  ).join('');
+  const premCells = enrollCols.map(c =>
+    `<td style="text-align:center;padding:4px 3px;border-left:1px solid #CDD5E8;">${fmtP(c.kws)}</td>`
+  ).join('');
+  const noteHtml = note
+    ? `<tr><td colspan="${colCount + 2}" style="font-size:8px;color:#888;padding:3px 8px;border-top:1px solid #CDD5E8;">※ ${note}</td></tr>`
+    : '';
+  return `
+    <div style="border:1.5px solid #CDD5E8;border-radius:5px;margin-bottom:8px;overflow:hidden;">
+      <div style="background:#1a3080;color:white;padding:5px 10px;display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700;">
+        📋 가입내역
+      </div>
+      <table style="width:100%;border-collapse:collapse;table-layout:fixed;font-size:10px;">
+        <colgroup>
+          <col style="width:20%">
+          ${enrollCols.map(() => `<col style="width:${colW}%">`).join('')}
+          <col style="width:8%">
+        </colgroup>
+        <thead>
+          <tr style="background:#1a3080;color:white;">
+            <th style="text-align:center;padding:4px 6px;font-size:10px;">가입담보</th>
+            ${thCells}
+            <th style="text-align:center;padding:4px 3px;border-left:1px solid rgba(255,255,255,0.2);font-size:9px;">QR</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr style="background:#fff;">
+            <td style="padding:4px 6px;font-size:10px;font-weight:700;color:#333;border-bottom:1px solid #CDD5E8;">가입금액</td>
+            ${amtCells}
+            <td rowspan="2" style="text-align:center;vertical-align:middle;border-left:1px solid #CDD5E8;padding:3px;">
+              <img src="${qrUrl}" width="60" height="60"
+                style="border-radius:4px;background:white;padding:2px;cursor:pointer;display:block;margin:0 auto;"
+                onclick="${qrClick}" alt="QR" onerror="this.style.display='none'">
+            </td>
+          </tr>
+          <tr style="background:#FFF8F0;">
+            <td style="padding:4px 6px;font-size:10px;font-weight:700;color:#333;">월보험료</td>
+            ${premCells}
+          </tr>
+          ${noteHtml}
+        </tbody>
+      </table>
+    </div>`;
+}
+
+function makeSmartStats(icon, title, maxPct, headers, rows, fmtA) {
+  const [h0, h1, h2, h3, h4] = headers;
+  const rowsHtml = rows.map((r, i) => {
+    const barW = Math.round((r.pct / maxPct) * 90);
+    const amtHtml = r.kws && r.kws.length > 0 ? fmtA(r.kws) : `<span style="color:#ccc;font-size:10px;">-</span>`;
+    const bg = i % 2 === 0 ? '#fff' : '#F8F9FD';
+    return `<tr style="background:${bg};">
+      <td style="text-align:center;padding:4px 4px;font-size:10px;font-weight:700;color:#1a3080;white-space:nowrap;">${r.rank}</td>
+      <td style="padding:4px 6px;font-size:10px;white-space:nowrap;">${r.label}</td>
+      <td style="padding:4px 6px;">
+        <div style="display:flex;align-items:center;gap:4px;">
+          <div style="background:#4477CC;height:13px;border-radius:2px;width:${barW}px;flex-shrink:0;"></div>
+          <span style="font-size:9px;color:#555;white-space:nowrap;">${r.pct}${typeof r.pct === 'number' && !String(r.pct).includes('일') ? '%' : ''}</span>
+        </div>
+      </td>
+      <td style="padding:4px 6px;font-size:10px;color:#555;white-space:nowrap;">${r.cov}</td>
+      <td style="text-align:center;padding:4px 4px;">${amtHtml}</td>
+    </tr>`;
+  }).join('');
+  return `
+    <div style="border:1.5px solid #1a3080;border-radius:5px;margin-bottom:8px;overflow:hidden;">
+      <div style="background:#1a3080;color:white;padding:5px 10px;font-size:12px;font-weight:700;">${icon} ${title}</div>
+      <table style="width:100%;border-collapse:collapse;font-size:10px;">
+        <thead>
+          <tr style="background:#1a3080;color:white;">
+            <th style="text-align:center;padding:4px;width:12%;">${h0}</th>
+            <th style="padding:4px 6px;width:20%;">${h1}</th>
+            <th style="padding:4px 6px;width:28%;">${h2}</th>
+            <th style="padding:4px 6px;width:22%;">${h3}</th>
+            <th style="text-align:center;padding:4px;width:18%;">${h4}</th>
+          </tr>
+        </thead>
+        <tbody>${rowsHtml}</tbody>
+      </table>
+    </div>`;
+}
+
+function makeSmartAge(icon, title, ageLabel, groups, fmtA) {
+  const cols = groups[0] ? groups[0].causes.length : 5;
+  const rankHeaders = Array.from({length: cols}, (_, i) => `<th style="text-align:center;padding:4px 3px;font-size:10px;width:${Math.floor(72/cols)}%;">${i+1}위</th>`).join('');
+  const groupRows = groups.map(g => {
+    const causeCells = g.causes.map((cause, i) => {
+      const kws = g.kws[i] || [];
+      return `<td style="text-align:center;padding:3px 3px;font-size:10px;color:#FF8800;font-weight:700;white-space:nowrap;">${cause}</td>`;
+    }).join('');
+    const amtCells = g.causes.map((cause, i) => {
+      const kws = g.kws[i] || [];
+      return `<td style="text-align:center;padding:3px 3px;font-size:9px;">${kws.length > 0 ? fmtA(kws) : '<span style="color:#ccc;font-size:9px;">-</span>'}</td>`;
+    }).join('');
+    return `
+      <tr style="background:#F8F9FD;">
+        <td rowspan="2" style="text-align:center;padding:4px 6px;font-size:11px;font-weight:700;color:#1a3080;border-right:1px solid #CDD5E8;vertical-align:middle;">${g.age}</td>
+        ${causeCells}
+      </tr>
+      <tr style="background:#fff;">
+        <td style="display:none;"></td>
+        ${amtCells}
+      </tr>`;
+  }).join('');
+  return `
+    <div style="border:1.5px solid #1a3080;border-radius:5px;margin-bottom:8px;overflow:hidden;">
+      <div style="background:#1a3080;color:white;padding:5px 10px;font-size:12px;font-weight:700;">${icon} ${title}</div>
+      <table style="width:100%;border-collapse:collapse;font-size:10px;table-layout:fixed;">
+        <colgroup>
+          <col style="width:10%">
+          ${Array.from({length: cols}, () => `<col style="width:${Math.floor(72/cols)}%">`).join('')}
+        </colgroup>
+        <thead>
+          <tr style="background:#1a3080;color:white;">
+            <th style="text-align:center;padding:4px 6px;font-size:10px;width:10%;">구분</th>
+            ${rankHeaders}
+          </tr>
+        </thead>
+        <tbody>${groupRows}</tbody>
+      </table>
+    </div>`;
+}
+
 // ===== 암 보장 렌더링 =====
 function renderCancer(coverages) {
   const container = document.getElementById('cancerContent');
-  const items = getCatCoverages(coverages, '암');
+  const customer = document.getElementById('customerName').value.trim() || '고객';
+  const product  = document.getElementById('productName').value.trim() || '';
+  const payment  = document.getElementById('paymentInfo').value.trim() || '';
+  const totalPremium = sumPremiums(coverages);
+  const today = new Date().toLocaleDateString('ko-KR');
 
-  const diagItems = items.filter(c => c.cat.sub === '진단');
-  const treatItems = items.filter(c => c.cat.sub === '치료');
-  const surgItems = items.filter(c => c.cat.sub === '수술');
+  function byKw(...kws) { return coverages.filter(c => kws.some(kw => c.name.includes(kw))); }
+  function fmtA(kws) {
+    const v = sumAmounts(byKw(...kws));
+    return v ? `<strong style="color:#CC2200;font-size:12px;">${formatManwon(toManwon(v))}</strong>`
+             : `<span style="color:#ccc;font-size:10px;">0만원</span>`;
+  }
+  function fmtP(kws) {
+    const v = Math.round(sumPremiums(byKw(...kws)));
+    return v ? `<strong style="color:#CC2200;">${v.toLocaleString()}원</strong>`
+             : `<span style="color:#ccc;">0원</span>`;
+  }
 
-  // 주요 진단금 합계
-  const totalDiag = diagItems.filter(c => ['일반암', '특정암', '고액암'].includes(c.cat.group)).reduce((s, c) => s + c.amount, 0);
+  const enrollCols = [
+    { label: '일반암진단',  kws: ['일반암'] },
+    { label: '유사암진단',  kws: ['유사암', '소액암', '갑상선암'] },
+    { label: '항암치료비',  kws: ['표적항암', '면역항암', '카티(CAR-T)', '다빈치로봇', '양성자'] },
+    { label: '암수술비',    kws: ['암수술', '암치료수술'] },
+  ];
 
-  // 그룹별 집계
-  const diagGroups = groupItems(diagItems);
-  const treatGroups = groupItems(treatItems);
-  const surgGroups = groupItems(surgItems);
+  const statsRows = [
+    { rank:'1위', label:'갑상선암',  pct:12.1, cov:'유사암진단',  kws:['유사암','갑상선암','소액암'] },
+    { rank:'2위', label:'대장암',    pct:12.0, cov:'일반암진단',  kws:['일반암'] },
+    { rank:'3위', label:'폐암',      pct:11.2, cov:'일반암진단',  kws:['일반암'] },
+    { rank:'4위', label:'위암',      pct:9.5,  cov:'일반암진단',  kws:['일반암'] },
+    { rank:'5위', label:'유방암',    pct:9.3,  cov:'일반암진단',  kws:['일반암'] },
+    { rank:'6위', label:'전립선암',  pct:8.0,  cov:'일반암진단',  kws:['일반암'] },
+    { rank:'7위', label:'간암',      pct:5.6,  cov:'일반암진단',  kws:['일반암'] },
+    { rank:'8위', label:'췌장암',    pct:3.2,  cov:'일반암진단',  kws:['일반암'] },
+    { rank:'9위', label:'담낭암',    pct:2.6,  cov:'일반암진단',  kws:['일반암'] },
+    { rank:'10위',label:'신장암',    pct:2.5,  cov:'일반암진단',  kws:['일반암'] },
+  ];
 
-  container.innerHTML = `
-    <div class="proposal-page">
-      ${makePageHeader('🔬', "안 보이는 '암' 보험을 한눈에 보여주는 스마트제안서", '진단 · 항암치료 · 수술 · 입원 보장')}
-      <div class="page-body">
-        <div class="highlight-box">
-          <div>
-            <div class="highlight-label">암 진단 시 주요 보장액 (일반암 기준)</div>
-          </div>
-          <div class="highlight-amount">${formatManwon(toManwon(totalDiag))}</div>
-        </div>
-        <div class="notice-box">
-          ⚠️ 암담보 특약은 <strong>가입 후 90일 면책기간</strong>이 적용되며, 가입 후 1년 이내 진단 시 50% 감액 조건이 있습니다.
-        </div>
-        <div class="proposal-grid">
-          ${makeCollapsibleColGroups('①', '진단 보장', diagGroups, diagItems, '', formatManwon(toManwon(sumAmounts(diagItems))))}
-          ${makeCollapsibleColGroups('②', '최신 항암치료 보장', treatGroups, treatItems, 'blue', treatItems.length + '개')}
-          ${makeCollapsibleColGroups('③', '수술 보장', surgGroups, surgItems, 'purple', formatManwon(toManwon(sumAmounts(surgItems))))}
-        </div>
-        <div class="section-divider">암 보장 상세 내역</div>
-        ${renderDetailTable(items)}
+  const ageGroups = [
+    { age:'50대', causes:['갑상선','대장','유방','위','폐'],   kws:[['유사암','갑상선암','소액암'],['일반암'],['일반암'],['일반암'],['일반암']] },
+    { age:'60대', causes:['폐','대장','위','간','전립선'],     kws:[['일반암'],['일반암'],['일반암'],['일반암'],['일반암']] },
+    { age:'70대', causes:['폐','대장','위','간','췌장'],       kws:[['일반암'],['일반암'],['일반암'],['일반암'],['일반암']] },
+  ];
+
+  const content = `
+    <div style="padding:12px 15px 10px;font-size:11px;">
+      ${makeSmartTabHdr('암보험금편', customer, product, payment, totalPremium, today)}
+      ${makeSmartEnroll('cancer', enrollCols, kws => fmtA(kws), kws => fmtP(kws), '일반암 기준 / 유사암·소액암 별도 약관 참조')}
+      ${makeSmartStats('📊', '암 발생통계 (2022년 기준)', 13,
+          ['순위','암종류','구성비','보장담보','보험금'], statsRows, kws => fmtA(kws))}
+      ${makeSmartAge('👤', '연령대별 암 발생 현황', '암보험금', ageGroups, kws => fmtA(kws))}
+      <div style="font-size:8px;color:#999;border-top:1px solid #eee;padding-top:5px;margin-top:2px;">
+        ⚠️ 위 보장내용은 실제 증권 내용과 다를 수 있으며, 정확한 내용은 보험증권을 확인해 주시기 바랍니다.
       </div>
-    </div>
-  `;
+    </div>`;
+
+  container.innerHTML = `<div class="proposal-page">${content}</div>`;
 }
 
 // ===== 뇌 보장 렌더링 =====
 function renderBrain(coverages) {
   const container = document.getElementById('brainContent');
-  const items = getCatCoverages(coverages, '뇌');
+  const customer = document.getElementById('customerName').value.trim() || '고객';
+  const product  = document.getElementById('productName').value.trim() || '';
+  const payment  = document.getElementById('paymentInfo').value.trim() || '';
+  const totalPremium = sumPremiums(coverages);
+  const today = new Date().toLocaleDateString('ko-KR');
 
-  const diagItems = items.filter(c => c.cat.sub === '진단');
-  const surgItems = items.filter(c => c.cat.sub === '수술');
-  const examItems = items.filter(c => c.cat.sub === '검사');
+  function byKw(...kws) { return coverages.filter(c => kws.some(kw => c.name.includes(kw))); }
+  function fmtA(kws) {
+    const v = sumAmounts(byKw(...kws));
+    return v ? `<strong style="color:#CC2200;font-size:12px;">${formatManwon(toManwon(v))}</strong>`
+             : `<span style="color:#ccc;font-size:10px;">0만원</span>`;
+  }
+  function fmtP(kws) {
+    const v = Math.round(sumPremiums(byKw(...kws)));
+    return v ? `<strong style="color:#CC2200;">${v.toLocaleString()}원</strong>`
+             : `<span style="color:#ccc;">0원</span>`;
+  }
 
-  const brainFlowData = [
-    { stage: '검사', icon: '🔍', desc: '혈관조영술\nCT/MRI', items: examItems },
-    { stage: '뇌혈관질환', icon: '🩸', desc: '동맥경화/협착', items: diagItems.filter(c => c.name.includes('뇌혈관질환')) },
-    { stage: '뇌경색/뇌졸중', icon: '⚡', desc: '뇌졸중 진단', items: diagItems.filter(c => c.name.includes('뇌졸중') || c.name.includes('뇌경색')) },
-    { stage: '뇌출혈', icon: '🔴', desc: '뇌출혈 진단', items: diagItems.filter(c => c.name.includes('뇌출혈')) },
-    { stage: '수술/치료', icon: '⚕️', desc: '혈전용해 등', items: surgItems },
+  const enrollCols = [
+    { label: '뇌출혈',   kws: ['뇌출혈'] },
+    { label: '뇌경색',   kws: ['뇌경색','뇌졸중'] },
+    { label: '뇌혈관질환', kws: ['뇌혈관질환'] },
+    { label: '수술비',   kws: ['심뇌혈관질환수술','심뇌혈관질환주요치료비','혈전용해치료비'] },
   ];
 
-  container.innerHTML = `
-    <div class="proposal-page">
-      ${makePageHeader('🧠', "안 보이는 '뇌혈관' 보험을 한눈에 보여주는 스마트제안서", '뇌혈관질환 단계별 치료보장')}
-      <div class="page-body">
-        <div style="background:#EEF2FF; border-left:4px solid #3344CC; padding:12px 16px; border-radius:0 8px 8px 0; margin-bottom:16px; font-size:13px; color:#3344CC;">
-          💡 심·뇌혈관질환은 반복적인 수술비 보장이 매우 중요합니다. 재발할 수 있기 때문입니다.
-        </div>
-        <div class="flow-diagram">
-          ${brainFlowData.map((f, i) => `
-            <div class="flow-stage">
-              <div class="flow-stage-title">${f.stage}</div>
-              <div style="font-size:28px; margin-bottom:6px;">${f.icon}</div>
-              <div class="flow-stage-amount">${f.items.length > 0 ? formatManwon(toManwon(sumAmounts(f.items))) : '-'}</div>
-              <div class="flow-stage-desc">${f.desc}</div>
-            </div>
-            ${i < brainFlowData.length - 1 ? '<div class="flow-arrow">→</div>' : ''}
-          `).join('')}
-        </div>
-        <div class="proposal-grid">
-          ${makeCollapsibleCol('①', '진단 보장', diagItems, '', formatManwon(toManwon(sumAmounts(diagItems))))}
-          ${makeCollapsibleCol('②', '수술/치료 보장', surgItems, 'blue', formatManwon(toManwon(sumAmounts(surgItems))))}
-          ${makeCollapsibleCol('③', '검사 보장', examItems, 'purple', examItems.length + '개')}
-        </div>
-        <div class="section-divider">뇌 보장 상세 내역</div>
-        ${renderDetailTable(items)}
+  const statsRows = [
+    { rank:'1위', label:'뇌경색(허혈성)', pct:71.2, cov:'진단+수술비', kws:['뇌경색','뇌졸중'] },
+    { rank:'2위', label:'뇌출혈(출혈성)', pct:21.0, cov:'진단+수술비', kws:['뇌출혈'] },
+    { rank:'3위', label:'일과성뇌허혈',   pct:7.8,  cov:'뇌혈관질환',  kws:['뇌혈관질환'] },
+  ];
+
+  const ageGroups = [
+    { age:'50대', causes:['뇌경색','뇌출혈','뇌혈관질환'], kws:[['뇌경색','뇌졸중'],['뇌출혈'],['뇌혈관질환']] },
+    { age:'60대', causes:['뇌경색','뇌출혈','뇌혈관질환'], kws:[['뇌경색','뇌졸중'],['뇌출혈'],['뇌혈관질환']] },
+    { age:'70대', causes:['뇌경색','뇌출혈','뇌혈관질환'], kws:[['뇌경색','뇌졸중'],['뇌출혈'],['뇌혈관질환']] },
+  ];
+
+  const content = `
+    <div style="padding:12px 15px 10px;font-size:11px;">
+      ${makeSmartTabHdr('뇌혈관보험금편', customer, product, payment, totalPremium, today)}
+      ${makeSmartEnroll('brain', enrollCols, kws => fmtA(kws), kws => fmtP(kws), '')}
+      ${makeSmartStats('📊', '뇌혈관질환 통계 (2022년 기준)', 75,
+          ['순위','뇌혈관질환','구성비','보장담보','보험금'], statsRows, kws => fmtA(kws))}
+      ${makeSmartAge('👤', '연령대별 뇌혈관질환 현황', '뇌혈관보험금', ageGroups, kws => fmtA(kws))}
+      <div style="font-size:8px;color:#999;border-top:1px solid #eee;padding-top:5px;margin-top:2px;">
+        ⚠️ 위 보장내용은 실제 증권 내용과 다를 수 있으며, 정확한 내용은 보험증권을 확인해 주시기 바랍니다.
       </div>
-    </div>
-  `;
+    </div>`;
+
+  container.innerHTML = `<div class="proposal-page">${content}</div>`;
 }
 
 // ===== 심장 보장 렌더링 =====
