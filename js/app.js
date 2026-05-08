@@ -489,6 +489,21 @@ function renderAllSections(coverages) {
   renderDriver(coverages);
   renderDaily(coverages);
   renderSurgery(coverages);
+  scaleDesktopFonts();
+}
+
+// 데스크탑(≥769px)에서 제안서 인라인 폰트 +15px
+function scaleDesktopFonts() {
+  if (window.innerWidth < 769) return;
+  document.querySelectorAll('.proposal-page').forEach(page => {
+    page.querySelectorAll('[style]').forEach(el => {
+      const s = el.getAttribute('style');
+      if (!s.includes('font-size')) return;
+      el.setAttribute('style', s.replace(/font-size\s*:\s*(\d+(?:\.\d+)?)px/g, (_, n) =>
+        `font-size:${parseFloat(n) + 15}px`
+      ));
+    });
+  });
 }
 
 // ===== 올인원 렌더링 =====

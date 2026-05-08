@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>스마트 제안서 v0.23 | 현대해상화재보험</title>
+<title>스마트 제안서 v0.24 | 현대해상화재보험</title>
 <!-- QR코드 API용 캐시 허용 -->
 <meta http-equiv="Content-Security-Policy" content="img-src * data:;">
 <style>
@@ -628,56 +628,47 @@ body { font-family: 'Malgun Gothic', '맑은 고딕', -apple-system, sans-serif;
   .logo-badge { width: 34px; height: 34px; font-size: 18px; }
 }
 
-/* ===== 데스크탑 글자 +10px ===== */
+/* ===== 데스크탑 글자 +15px ===== */
 @media (min-width: 769px) {
-  body { font-size: 24px; }
-  .logo-badge { font-size: 32px; }
-  .header-title { font-size: 30px; }
-  .header-sub { font-size: 21px; }
-  .header-info { font-size: 23px; }
-  .tab-btn { font-size: 23px; }
-  .tab-btn .tab-icon { font-size: 26px; }
-  .tab-badge { font-size: 20px; }
-  .card-header h2 { font-size: 27px; }
-  .card-icon { font-size: 28px; }
-  .form-label { font-size: 22px; }
-  .form-input { font-size: 24px; }
-  .paste-area { font-size: 23px; }
-  .paste-hint { font-size: 22px; }
-  .btn { font-size: 24px; }
-  .result-table { font-size: 23px; }
-  .cat-badge { font-size: 21px; }
-  .stat-num { font-size: 32px; }
-  .stat-label { font-size: 21px; }
-  .page-header-left h1 { font-size: 30px; }
-  .page-header-left .subtitle { font-size: 22px; }
-  .page-header-right { font-size: 23px; }
-  .page-header-right .customer-name { font-size: 28px; }
-  .col-header { font-size: 23px; }
-  .coverage-group-title { font-size: 23px; }
-  .total-label { font-size: 23px; }
-  .total-amount { font-size: 28px; }
-  .flow-stage-title { font-size: 21px; }
-  .flow-stage-amount { font-size: 30px; }
-  .flow-stage-desc { font-size: 21px; }
-  .highlight-label { font-size: 23px; }
-  .highlight-amount { font-size: 36px; }
-  .print-controls h3 { font-size: 25px; }
-  .empty-state-icon { font-size: 66px; }
-  .empty-state h3 { font-size: 28px; }
-  .empty-state p { font-size: 24px; }
-  .premium-item-label { font-size: 21px; }
-  .premium-item-value { font-size: 28px; }
-  .section-divider { font-size: 22px; }
-  /* 제안서 페이지: zoom으로 인라인 스타일 포함 전체 확대 */
-  .proposal-page {
-    zoom: 1.85;
-    width: calc(100% / 1.85);
-  }
-}
-/* 인쇄 시 zoom 초기화 */
-@media print {
-  .proposal-page { zoom: 1 !important; width: 100% !important; }
+  body { font-size: 29px; }
+  .logo-badge { font-size: 37px; }
+  .header-title { font-size: 35px; }
+  .header-sub { font-size: 26px; }
+  .header-info { font-size: 28px; }
+  .tab-btn { font-size: 28px; }
+  .tab-btn .tab-icon { font-size: 31px; }
+  .tab-badge { font-size: 25px; }
+  .card-header h2 { font-size: 32px; }
+  .card-icon { font-size: 33px; }
+  .form-label { font-size: 27px; }
+  .form-input { font-size: 29px; }
+  .paste-area { font-size: 28px; }
+  .paste-hint { font-size: 27px; }
+  .btn { font-size: 29px; }
+  .result-table { font-size: 28px; }
+  .cat-badge { font-size: 26px; }
+  .stat-num { font-size: 37px; }
+  .stat-label { font-size: 26px; }
+  .page-header-left h1 { font-size: 35px; }
+  .page-header-left .subtitle { font-size: 27px; }
+  .page-header-right { font-size: 28px; }
+  .page-header-right .customer-name { font-size: 33px; }
+  .col-header { font-size: 28px; }
+  .coverage-group-title { font-size: 28px; }
+  .total-label { font-size: 28px; }
+  .total-amount { font-size: 33px; }
+  .flow-stage-title { font-size: 26px; }
+  .flow-stage-amount { font-size: 35px; }
+  .flow-stage-desc { font-size: 26px; }
+  .highlight-label { font-size: 28px; }
+  .highlight-amount { font-size: 41px; }
+  .print-controls h3 { font-size: 30px; }
+  .empty-state-icon { font-size: 71px; }
+  .empty-state h3 { font-size: 33px; }
+  .empty-state p { font-size: 29px; }
+  .premium-item-label { font-size: 26px; }
+  .premium-item-value { font-size: 33px; }
+  .section-divider { font-size: 27px; }
 }
 </style>
 </head>
@@ -699,7 +690,7 @@ body { font-family: 'Malgun Gothic', '맑은 고딕', -apple-system, sans-serif;
       <div class="logo-badge">🛡️</div>
       <div>
         <div class="header-title">스마트 제안서</div>
-        <div class="header-sub">현대해상화재보험 · Smart Proposal System <span style="background:rgba(255,255,255,0.25); padding:1px 7px; border-radius:8px; font-size:10px; margin-left:6px; letter-spacing:0.5px;">v0.23</span></div>
+        <div class="header-sub">현대해상화재보험 · Smart Proposal System <span style="background:rgba(255,255,255,0.25); padding:1px 7px; border-radius:8px; font-size:10px; margin-left:6px; letter-spacing:0.5px;">v0.24</span></div>
       </div>
     </div>
     <div class="header-info">
