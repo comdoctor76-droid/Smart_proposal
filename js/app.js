@@ -1021,429 +1021,449 @@ function renderBrain(coverages) {
 // ===== 심장 보장 렌더링 =====
 function renderHeart(coverages) {
   const container = document.getElementById('heartContent');
-  const items = getCatCoverages(coverages, '심');
+  const customer = document.getElementById('customerName').value.trim() || '고객';
+  const product  = document.getElementById('productName').value.trim() || '';
+  const payment  = document.getElementById('paymentInfo').value.trim() || '';
+  const totalPremium = sumPremiums(coverages);
+  const today = new Date().toLocaleDateString('ko-KR');
 
-  const diagItems = items.filter(c => c.cat.sub === '진단');
-  const surgItems = items.filter(c => c.cat.sub === '수술');
+  function byKw(...kws) { return coverages.filter(c => kws.some(kw => c.name.includes(kw))); }
+  function fmtA(kws) {
+    const v = sumAmounts(byKw(...kws));
+    return v ? `<strong style="color:#CC2200;font-size:12px;">${formatManwon(toManwon(v))}</strong>`
+             : `<span style="color:#ccc;font-size:10px;">0만원</span>`;
+  }
+  function fmtP(kws) {
+    const v = Math.round(sumPremiums(byKw(...kws)));
+    return v ? `<strong style="color:#CC2200;">${v.toLocaleString()}원</strong>`
+             : `<span style="color:#ccc;">0원</span>`;
+  }
 
-  const heartTypes = [
-    { name: '부정맥', icon: '💓', filter: c => c.name.includes('I49') || c.name.includes('부정맥') },
-    { name: '협심증', icon: '💔', filter: c => c.name.includes('허혈심장') || c.name.includes('협심') },
-    { name: '급성심근경색', icon: '❤️‍🔥', filter: c => c.name.includes('급성심근경색') },
-    { name: '심부전', icon: '💙', filter: c => c.name.includes('심부전') || c.name.includes('심혈관(특정Ⅱ)') },
-    { name: '심장염증', icon: '🔴', filter: c => c.name.includes('심장염증') || c.name.includes('심혈관(주요') },
+  const enrollCols = [
+    { label: '급성심근경색', kws: ['급성심근경색'] },
+    { label: '협심증',       kws: ['허혈심장질환','협심'] },
+    { label: '부정맥',       kws: ['인공심박동기','이식형제세동기','부정맥','항응고제'] },
+    { label: '심장수술',     kws: ['심뇌혈관질환수술','심뇌혈관질환주요치료비'] },
   ];
 
-  container.innerHTML = `
-    <div class="proposal-page">
-      ${makePageHeader('❤️', "안 보이는 '심장' 보험을 한눈에 보여주는 스마트제안서", '심장질환 진단·수술·치료 보장')}
-      <div class="page-body">
-        <div class="flow-diagram">
-          ${heartTypes.map((ht, i) => {
-            const matched = diagItems.filter(ht.filter);
-            return `
-              <div class="flow-stage">
-                <div class="flow-stage-title">${ht.name}</div>
-                <div style="font-size:28px; margin-bottom:6px;">${ht.icon}</div>
-                <div class="flow-stage-amount">${matched.length > 0 ? formatManwon(toManwon(sumAmounts(matched))) : '-'}</div>
-                <div class="flow-stage-desc">진단금</div>
-              </div>
-              ${i < heartTypes.length - 1 ? '<div class="flow-arrow">|</div>' : ''}
-            `;
-          }).join('')}
-        </div>
-        <div class="proposal-grid">
-          ${makeCollapsibleCol('①', '진단 보장', diagItems, '', formatManwon(toManwon(sumAmounts(diagItems))))}
-          ${makeCollapsibleCol('②', '수술/치료 보장', surgItems, 'blue', formatManwon(toManwon(sumAmounts(surgItems))))}
-          <div class="proposal-col">
-            <div class="col-header purple">③ 보장 요약</div>
-            <div style="padding:14px;text-align:center;">
-              <div style="font-size:40px;margin-bottom:6px;">❤️</div>
-              <div style="font-size:28px;font-weight:800;color:var(--orange);">${formatManwon(toManwon(sumAmounts(items)))}</div>
-              <div style="font-size:11px;color:var(--text-light);margin-top:8px;line-height:1.8;">
-                진단 ${diagItems.length}개 · 수술/치료 ${surgItems.length}개<br>
-                월 보험료 ${Math.round(sumPremiums(items)).toLocaleString()}원
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="section-divider">심장 보장 상세 내역</div>
-        ${renderDetailTable(items)}
+  const statsRows = [
+    { rank:'1위', label:'허혈성심장질환', pct:39.5, cov:'급성심근경색+협심증', kws:['급성심근경색','허혈심장질환'] },
+    { rank:'2위', label:'부정맥',         pct:28.2, cov:'부정맥수술',           kws:['인공심박동기','이식형제세동기','항응고제'] },
+    { rank:'3위', label:'심부전',         pct:17.3, cov:'심장수술',             kws:['심뇌혈관질환수술','심뇌혈관질환주요치료비'] },
+    { rank:'4위', label:'심장판막질환',   pct:9.7,  cov:'심장수술',             kws:['심뇌혈관질환수술'] },
+    { rank:'5위', label:'기타심장질환',   pct:5.3,  cov:'심장수술',             kws:['심뇌혈관질환수술'] },
+  ];
+
+  const ageGroups = [
+    { age:'50대', causes:['허혈성심장','부정맥','심부전'], kws:[['급성심근경색','허혈심장질환'],['인공심박동기','이식형제세동기','항응고제'],['심뇌혈관질환수술','심뇌혈관질환주요치료비']] },
+    { age:'60대', causes:['허혈성심장','부정맥','심부전'], kws:[['급성심근경색','허혈심장질환'],['인공심박동기','이식형제세동기','항응고제'],['심뇌혈관질환수술','심뇌혈관질환주요치료비']] },
+    { age:'70대', causes:['허혈성심장','심부전','부정맥'], kws:[['급성심근경색','허혈심장질환'],['심뇌혈관질환수술','심뇌혈관질환주요치료비'],['인공심박동기','이식형제세동기','항응고제']] },
+  ];
+
+  const content = `
+    <div style="padding:12px 15px 10px;font-size:11px;">
+      ${makeSmartTabHdr('심혈관보험금편', customer, product, payment, totalPremium, today)}
+      ${makeSmartEnroll('heart', enrollCols, kws => fmtA(kws), kws => fmtP(kws), '')}
+      ${makeSmartStats('📊', '심혈관질환 통계 (2022년 기준)', 45,
+          ['순위','심혈관질환','구성비','보장담보','보험금'], statsRows, kws => fmtA(kws))}
+      ${makeSmartAge('👤', '연령대별 심혈관질환 현황', '심혈관보험금', ageGroups, kws => fmtA(kws))}
+      <div style="font-size:8px;color:#999;border-top:1px solid #eee;padding-top:5px;margin-top:2px;">
+        ⚠️ 위 보장내용은 실제 증권 내용과 다를 수 있으며, 정확한 내용은 보험증권을 확인해 주시기 바랍니다.
       </div>
-    </div>
-  `;
+    </div>`;
+
+  container.innerHTML = `<div class="proposal-page">${content}</div>`;
 }
 
-// ===== 사망·장해 보장 렌더링 =====
+// ===== 사망 보장 렌더링 =====
 function renderDeath(coverages) {
   const container = document.getElementById('deathContent');
-  const allInjury = getCatCoverages(coverages, '상해');
-  const deathItems = allInjury.filter(c => c.cat.sub === '사망장해');
-  const deathOnly = deathItems.filter(c => c.name.includes('사망') && !c.name.includes('후유장해'));
-  const disabilityOnly = deathItems.filter(c => c.name.includes('후유장해') || c.name.includes('장해'));
+  const customer = document.getElementById('customerName').value.trim() || '고객';
+  const product  = document.getElementById('productName').value.trim() || '';
+  const payment  = document.getElementById('paymentInfo').value.trim() || '';
+  const totalPremium = sumPremiums(coverages);
+  const today = new Date().toLocaleDateString('ko-KR');
 
-  container.innerHTML = `
-    <div class="proposal-page">
-      ${makePageHeader('🛡️', "안 보이는 '사망·장해' 보험을 한눈에 보여주는 스마트제안서", '상해사망·후유장해 보장')}
-      <div class="page-body">
-        <div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;">
-          <div class="highlight-box" style="flex:1;min-width:140px;">
-            <div>
-              <div class="highlight-label">상해사망</div>
-              <div style="font-size:11px;opacity:0.8;margin-top:2px;">상해사망 담보 기준</div>
-            </div>
-            <div class="highlight-amount">${formatManwon(toManwon(sumAmounts(deathOnly)))}</div>
-          </div>
-          <div class="highlight-box" style="flex:1;min-width:140px;background:linear-gradient(135deg,#3300CC,#1A0088);">
-            <div>
-              <div class="highlight-label">상해후유</div>
-              <div style="font-size:11px;opacity:0.8;margin-top:2px;">상해후유장해 담보 기준</div>
-            </div>
-            <div class="highlight-amount">${formatManwon(toManwon(sumAmounts(disabilityOnly)))}</div>
-          </div>
-        </div>
-        <div class="proposal-grid">
-          ${makeCollapsibleCol('①', '상해사망 보장', deathOnly, '', formatManwon(toManwon(sumAmounts(deathOnly))))}
-          ${makeCollapsibleCol('②', '상해후유 보장', disabilityOnly, 'blue', formatManwon(toManwon(sumAmounts(disabilityOnly))))}
-        </div>
-        <div class="section-divider">사망·장해 보장 상세 내역</div>
-        ${renderDetailTable(deathItems)}
+  function byKw(...kws) { return coverages.filter(c => kws.some(kw => c.name.includes(kw))); }
+  function fmtA(kws) {
+    const v = sumAmounts(byKw(...kws));
+    return v ? `<strong style="color:#CC2200;font-size:12px;">${formatManwon(toManwon(v))}</strong>`
+             : `<span style="color:#ccc;font-size:10px;">0만원</span>`;
+  }
+  function fmtP(kws) {
+    const v = Math.round(sumPremiums(byKw(...kws)));
+    return v ? `<strong style="color:#CC2200;">${v.toLocaleString()}원</strong>`
+             : `<span style="color:#ccc;">0원</span>`;
+  }
+
+  const enrollCols = [
+    { label: '상해사망',    kws: ['상해사망'] },
+    { label: '질병사망',    kws: ['질병사망'] },
+    { label: '3대질병사망', kws: ['3대질병사망','뇌혈관사망','허혈심장사망'] },
+    { label: '암사망',      kws: ['암사망'] },
+  ];
+
+  const statsRows = [
+    { rank:'1위',  label:'암',           pct:24.8, cov:'질병+3대+암사망', kws:['질병사망','3대질병사망','암사망'] },
+    { rank:'2위',  label:'심장질환',     pct:9.4,  cov:'질병+3대사망',    kws:['질병사망','3대질병사망'] },
+    { rank:'3위',  label:'폐렴',         pct:8.4,  cov:'질병사망',         kws:['질병사망'] },
+    { rank:'4위',  label:'뇌혈관질환',  pct:6.9,  cov:'질병+3대사망',    kws:['질병사망','3대질병사망'] },
+    { rank:'5위',  label:'고의적자해',  pct:4.1,  cov:'-',                kws:[] },
+    { rank:'6위',  label:'알츠하이머',  pct:3.4,  cov:'질병사망',         kws:['질병사망'] },
+    { rank:'7위',  label:'당뇨병',       pct:3.1,  cov:'질병사망',         kws:['질병사망'] },
+    { rank:'8위',  label:'고혈압성질환',pct:2.3,  cov:'질병사망',         kws:['질병사망'] },
+    { rank:'9위',  label:'간질환',       pct:2.2,  cov:'질병사망',         kws:['질병사망'] },
+    { rank:'10위', label:'패혈증',       pct:2.2,  cov:'질병사망',         kws:['질병사망'] },
+    { rank:'기타', label:'교통사고',     pct:1.0,  cov:'상해사망',         kws:['상해사망'] },
+  ];
+
+  const ageGroups = [
+    {
+      age:'50대',
+      causes:['암','심장질환','간질환','뇌혈관질환','당뇨병'],
+      kws:[['질병사망','3대질병사망','암사망'],['질병사망','3대질병사망'],['질병사망'],['질병사망','3대질병사망'],['질병사망']]
+    },
+    {
+      age:'60대',
+      causes:['암','심장질환','뇌혈관질환','간질환','폐렴'],
+      kws:[['질병사망','3대질병사망','암사망'],['질병사망','3대질병사망'],['질병사망','3대질병사망'],['질병사망'],['질병사망']]
+    },
+    {
+      age:'70대',
+      causes:['암','심장질환','뇌혈관질환','폐렴','당뇨병'],
+      kws:[['질병사망','3대질병사망','암사망'],['질병사망','3대질병사망'],['질병사망','3대질병사망'],['질병사망'],['질병사망']]
+    },
+  ];
+
+  const content = `
+    <div style="padding:12px 15px 10px;font-size:11px;">
+      ${makeSmartTabHdr('사망보험금편', customer, product, payment, totalPremium, today)}
+      ${makeSmartEnroll('death', enrollCols, kws => fmtA(kws), kws => fmtP(kws), '3대질병사망 : 암(유사암포함), 뇌혈관질환, 허혈심장질환')}
+      ${makeSmartStats('📊', '사망원인별 통계 (2022년 기준)', 25,
+          ['순위','사망원인','구성비','보장담보','보험금'], statsRows, kws => fmtA(kws))}
+      ${makeSmartAge('👤', '연령대별 사망원인 현황', '사망보험금', ageGroups, kws => fmtA(kws))}
+      <div style="font-size:8px;color:#999;border-top:1px solid #eee;padding-top:5px;margin-top:2px;">
+        ⚠️ 위 보장내용은 실제 증권 내용과 다를 수 있으며, 정확한 내용은 보험증권을 확인해 주시기 바랍니다.
       </div>
-    </div>
-  `;
+    </div>`;
+
+  container.innerHTML = `<div class="proposal-page">${content}</div>`;
 }
 
-// ===== 상해 보장 렌더링 (골절·화상·재활) =====
+// ===== 상해 보장 렌더링 =====
 function renderInjury(coverages) {
   const container = document.getElementById('injuryContent');
   if (!container) return;
-  const allInjury = getCatCoverages(coverages, '상해');
-  const fracItems  = allInjury.filter(c => c.cat.sub === '골절화상');
-  const rehabItems = allInjury.filter(c => c.cat.sub === '재활');
-  const otherItems = allInjury.filter(c => !['사망장해','골절화상','재활'].includes(c.cat.sub));
-  const totalItems = [...fracItems, ...rehabItems, ...otherItems];
+  const customer = document.getElementById('customerName').value.trim() || '고객';
+  const product  = document.getElementById('productName').value.trim() || '';
+  const payment  = document.getElementById('paymentInfo').value.trim() || '';
+  const totalPremium = sumPremiums(coverages);
+  const today = new Date().toLocaleDateString('ko-KR');
 
-  if (totalItems.length === 0) {
-    container.innerHTML = `<div class="card"><div class="empty-state"><div class="empty-state-icon">🦴</div><h3>상해 담보 없음</h3><p>골절·화상·재활 관련 담보가 없습니다.</p></div></div>`;
-    return;
+  function byKw(...kws) { return coverages.filter(c => kws.some(kw => c.name.includes(kw))); }
+  function fmtA(kws) {
+    const v = sumAmounts(byKw(...kws));
+    return v ? `<strong style="color:#CC2200;font-size:12px;">${formatManwon(toManwon(v))}</strong>`
+             : `<span style="color:#ccc;font-size:10px;">0만원</span>`;
+  }
+  function fmtP(kws) {
+    const v = Math.round(sumPremiums(byKw(...kws)));
+    return v ? `<strong style="color:#CC2200;">${v.toLocaleString()}원</strong>`
+             : `<span style="color:#ccc;">0원</span>`;
   }
 
-  container.innerHTML = `
-    <div class="proposal-page">
-      ${makePageHeader('🦴', "안 보이는 '상해' 보험을 한눈에 보여주는 스마트제안서", '골절·화상·재활 보장')}
-      <div class="page-body">
-        <div class="highlight-box">
-          <div><div class="highlight-label">상해 보장 합계</div></div>
-          <div class="highlight-amount">${formatManwon(toManwon(sumAmounts(totalItems)))}</div>
-        </div>
-        <div class="proposal-grid">
-          ${makeCollapsibleCol('①', '골절·화상 보장', fracItems, '', formatManwon(toManwon(sumAmounts(fracItems))))}
-          ${makeCollapsibleCol('②', '재활 보장', rehabItems, 'blue', rehabItems.length + '개')}
-          ${otherItems.length > 0 ? makeCollapsibleCol('③', '기타 상해 보장', otherItems, 'purple', formatManwon(toManwon(sumAmounts(otherItems)))) : ''}
-        </div>
-        <div class="section-divider">상해 보장 상세 내역</div>
-        ${renderDetailTable(totalItems)}
+  const enrollCols = [
+    { label: '골절',     kws: ['골절'] },
+    { label: '화상',     kws: ['화상'] },
+    { label: '재활',     kws: ['재활','물리치료','도수치료'] },
+    { label: '상해수술', kws: ['상해수술'] },
+  ];
+
+  const statsRows = [
+    { rank:'1위', label:'낙상·추락',  pct:32.4, cov:'골절+재활',  kws:['골절'] },
+    { rank:'2위', label:'교통사고',   pct:21.3, cov:'상해수술',   kws:['상해수술'] },
+    { rank:'3위', label:'운동손상',   pct:15.7, cov:'골절+재활',  kws:['골절'] },
+    { rank:'4위', label:'화재·화상',  pct:8.2,  cov:'화상',        kws:['화상'] },
+    { rank:'5위', label:'기타상해',   pct:22.4, cov:'상해수술',   kws:['상해수술'] },
+  ];
+
+  const content = `
+    <div style="padding:12px 15px 10px;font-size:11px;">
+      ${makeSmartTabHdr('상해보험금편', customer, product, payment, totalPremium, today)}
+      ${makeSmartEnroll('injury', enrollCols, kws => fmtA(kws), kws => fmtP(kws), '')}
+      ${makeSmartStats('📊', '상해 발생 통계 (2022년 기준)', 35,
+          ['순위','상해원인','구성비','보장담보','보험금'], statsRows, kws => fmtA(kws))}
+      <div style="font-size:8px;color:#999;border-top:1px solid #eee;padding-top:5px;margin-top:2px;">
+        ⚠️ 위 보장내용은 실제 증권 내용과 다를 수 있으며, 정확한 내용은 보험증권을 확인해 주시기 바랍니다.
       </div>
-    </div>
-  `;
+    </div>`;
+
+  container.innerHTML = `<div class="proposal-page">${content}</div>`;
 }
 
-// ===== 한장 요약 렌더링 =====
+// ===== 핵심보장 요약 렌더링 =====
 function renderOnePager(coverages) {
   const container = document.getElementById('onepagerContent');
   const customer = document.getElementById('customerName').value.trim() || '고객';
-
-  const cancerItems = getCatCoverages(coverages, '암');
-  const brainItems = getCatCoverages(coverages, '뇌');
-  const heartItems = getCatCoverages(coverages, '심');
-  const deathItems = getCatCoverages(coverages, '상해').filter(c => c.cat.sub === '사망장해');
+  const product  = document.getElementById('productName').value.trim() || '';
+  const payment  = document.getElementById('paymentInfo').value.trim() || '';
   const totalPremium = sumPremiums(coverages);
+  const today = new Date().toLocaleDateString('ko-KR');
 
-  // 각 섹션별 진단 주요 금액
-  const cancerDiag = cancerItems.filter(c => c.cat.sub === '진단' && ['일반암', '특정암'].includes(c.cat.group));
-  const brainDiag = brainItems.filter(c => c.cat.sub === '진단');
-  const heartDiag = heartItems.filter(c => c.cat.sub === '진단');
-
-  function makeSection(icon, color, title, diagItems, allItems) {
-    const sid = 'ops' + (++_colSec);
-    const topItems = diagItems.slice(0, 5);
-    const totalAmt = formatManwon(toManwon(sumAmounts(allItems)));
-    return `
-      <div style="flex:1; border:2px solid ${color}; border-radius:10px; overflow:hidden; min-width:180px;">
-        <div style="background:${color}; color:white; padding:10px 14px; font-size:14px; font-weight:800; display:flex; align-items:center; justify-content:space-between; gap:8px; cursor:pointer; user-select:none;"
-             onclick="(function(){var el=document.getElementById('${sid}');var ar=document.getElementById('${sid}_a');var open=el.style.display!=='none';el.style.display=open?'none':'block';ar.style.transform=open?'':'rotate(180deg)';if(!open){el.style.animation='none';requestAnimationFrame(function(){el.style.animation='slideDown 0.25s ease';});}})()">
-          <span><span>${icon}</span> ${title} 총 ${totalAmt}</span>
-          <span id="${sid}_a" style="font-size:10px; transition:transform 0.25s; display:inline-block;">▼</span>
-        </div>
-        <div id="${sid}" style="display:none;">
-          <div style="padding:6px 0;">
-            ${topItems.length > 0 ? topItems.map(c => `
-              <div style="display:flex; justify-content:space-between; padding:6px 12px; border-bottom:1px solid #f0f0f0; font-size:12px;">
-                <span style="flex:1; color:#333;">${c.cat ? c.cat.label : c.name}</span>
-                <span style="font-weight:700; color:${color}; white-space:nowrap; margin-left:8px;">${formatManwon(toManwon(c.amount))}</span>
-              </div>
-            `).join('') : '<div style="padding:10px 12px; color:#999; font-size:12px;">담보 없음</div>'}
-            ${allItems.length > topItems.length ? `<div style="padding:6px 12px; font-size:11px; color:#999;">외 ${allItems.length - topItems.length}개 담보...</div>` : ''}
-          </div>
-          <div style="background:#f8f8f8; padding:8px 12px; display:flex; justify-content:space-between; align-items:center; border-top:1px solid #e0e0e0;">
-            <span style="font-size:11px; color:#666; font-weight:700;">총 ${allItems.length}개 담보</span>
-            <span style="font-size:14px; font-weight:800; color:${color};">${totalAmt}</span>
-          </div>
-        </div>
-      </div>
-    `;
+  function byKw(...kws) { return coverages.filter(c => kws.some(kw => c.name.includes(kw))); }
+  function fmtA(kws) {
+    const v = sumAmounts(byKw(...kws));
+    return v ? `<strong style="color:#CC2200;font-size:12px;">${formatManwon(toManwon(v))}</strong>`
+             : `<span style="color:#ccc;font-size:10px;">0만원</span>`;
+  }
+  function fmtP(kws) {
+    const v = Math.round(sumPremiums(byKw(...kws)));
+    return v ? `<strong style="color:#CC2200;">${v.toLocaleString()}원</strong>`
+             : `<span style="color:#ccc;">0원</span>`;
   }
 
-  container.innerHTML = `
-    <div class="proposal-page">
-      ${makePageHeader('📄', "안 보이는 '핵심 보장'을 한눈에 보여주는 스마트제안서", '암 · 뇌 · 심장 핵심 보장 한눈에 보기')}
-      <div class="page-body">
-        <div style="display:flex; justify-content:flex-end; margin-bottom:12px; font-size:12px; color:var(--text-light);">
-          <span>월 납입 보험료 합계 <strong style="color:var(--orange); font-size:14px;">${Math.round(totalPremium).toLocaleString()}원</strong> · 총 ${coverages.length}개 담보</span>
+  // 4대 영역 요약 박스
+  function makeSummaryBox(color, icon, title, kws) {
+    const amt = fmtA(kws);
+    const prem = fmtP(kws);
+    return `
+      <div style="border:1.5px solid ${color};border-radius:6px;overflow:hidden;">
+        <div style="background:${color};color:white;padding:5px 10px;font-size:12px;font-weight:700;">${icon} ${title}</div>
+        <div style="padding:8px 10px;background:#FAFBFF;">
+          <div style="font-size:10px;color:#666;margin-bottom:3px;">진단·수술 합계</div>
+          <div style="font-size:14px;">${amt}</div>
+          <div style="font-size:9px;color:#888;margin-top:4px;">월보험료 ${prem}</div>
         </div>
+      </div>`;
+  }
 
-        <div style="display:flex; gap:14px; flex-wrap:wrap; margin-bottom:16px;">
-          ${makeSection('🔬', '#CC0000', '암 보장', cancerDiag, cancerItems)}
-          ${makeSection('🧠', '#3344CC', '뇌 보장', brainDiag, brainItems)}
-          ${makeSection('❤️', '#CC1155', '심장 보장', heartDiag, heartItems)}
+  const content = `
+    <div style="padding:12px 15px 10px;font-size:11px;">
+      ${makeSmartTabHdr('핵심보장 요약편', customer, product, payment, totalPremium, today)}
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+        ${makeSummaryBox('#CC0000','🔬','암 보장',['일반암','유사암','소액암','갑상선암','표적항암','면역항암','암수술'])}
+        ${makeSummaryBox('#1a3080','🧠','뇌혈관 보장',['뇌출혈','뇌경색','뇌졸중','뇌혈관질환','심뇌혈관질환수술','혈전용해치료비'])}
+        ${makeSummaryBox('#CC0066','❤️','심혈관 보장',['급성심근경색','허혈심장질환','협심','인공심박동기','이식형제세동기','심뇌혈관질환수술'])}
+        ${makeSummaryBox('#336600','🛡️','사망 보장',['상해사망','질병사망','3대질병사망','암사망'])}
+      </div>
+      <div style="border:1.5px solid #CDD5E8;border-radius:5px;padding:8px 12px;margin-bottom:8px;background:#FAFBFE;">
+        <div style="font-size:11px;font-weight:700;color:#1a3080;margin-bottom:6px;">📋 전체 보장 현황</div>
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <span style="font-size:11px;color:#555;">총 담보 수</span>
+          <strong style="color:#1a3080;">${coverages.length}개</strong>
         </div>
-
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:14px;">
-          <div style="border:1px solid var(--gray); border-radius:8px; padding:12px 14px;">
-            <div style="font-size:12px; font-weight:800; color:var(--orange); margin-bottom:8px;">🛡️ 사망·장해 보장</div>
-            ${deathItems.slice(0, 4).map(c => `
-              <div style="display:flex; justify-content:space-between; font-size:12px; padding:3px 0; border-bottom:1px solid #f0f0f0;">
-                <span>${c.cat ? c.cat.label : c.name}</span>
-                <span style="font-weight:700; color:var(--orange);">${formatManwon(toManwon(c.amount))}</span>
-              </div>
-            `).join('')}
-            <div style="text-align:right; margin-top:6px; font-size:13px; font-weight:800; color:var(--orange);">${formatManwon(toManwon(sumAmounts(deathItems)))}</div>
-          </div>
-          <div style="border:1px solid var(--gray); border-radius:8px; padding:12px 14px; background:var(--orange-pale);">
-            <div style="font-size:12px; font-weight:800; color:var(--orange); margin-bottom:8px;">📊 보장 현황 요약</div>
-            <div style="font-size:12px; line-height:2;">
-              <div style="display:flex; justify-content:space-between;"><span>🔬 암 담보</span><span style="font-weight:700;">${cancerItems.length}개</span></div>
-              <div style="display:flex; justify-content:space-between;"><span>🧠 뇌 담보</span><span style="font-weight:700;">${brainItems.length}개</span></div>
-              <div style="display:flex; justify-content:space-between;"><span>❤️ 심장 담보</span><span style="font-weight:700;">${heartItems.length}개</span></div>
-              <div style="display:flex; justify-content:space-between;"><span>🛡️ 사망·장해</span><span style="font-weight:700;">${deathItems.length}개</span></div>
-            </div>
-          </div>
-        </div>
-
-        <div class="notice-box">
-          ⚠️ 위 보장내용은 실제 증권 내용과 다를 수 있으며, 정확한 내용은 보험증권을 확인해 주시기 바랍니다.
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px;">
+          <span style="font-size:11px;color:#555;">월 납입 보험료 합계</span>
+          <strong style="color:#CC2200;font-size:13px;">${Math.round(totalPremium).toLocaleString()}원</strong>
         </div>
       </div>
-    </div>
-  `;
+      <div style="font-size:8px;color:#999;border-top:1px solid #eee;padding-top:5px;margin-top:2px;">
+        ⚠️ 위 보장내용은 실제 증권 내용과 다를 수 있으며, 정확한 내용은 보험증권을 확인해 주시기 바랍니다.
+      </div>
+    </div>`;
+
+  container.innerHTML = `<div class="proposal-page">${content}</div>`;
 }
 
 // ===== 수술(여) 렌더링 =====
 function renderWoman(coverages) {
   const container = document.getElementById('womanContent');
-  const surgItems = getCatCoverages(coverages, '수술');
-  const cancerItems = getCatCoverages(coverages, '암');
+  const customer = document.getElementById('customerName').value.trim() || '고객';
+  const product  = document.getElementById('productName').value.trim() || '';
+  const payment  = document.getElementById('paymentInfo').value.trim() || '';
+  const totalPremium = sumPremiums(coverages);
+  const today = new Date().toLocaleDateString('ko-KR');
 
-  // 여성 수술 담보
-  const womanSurgItems = surgItems.filter(c => c.cat.sub === '여성수술');
-  // 여성 양성종양 (유방, 자궁근종, 자궁내막증, 갑상선결절)
-  const benignWoman = surgItems.filter(c => c.cat.sub === '여성양성종양' ||
-    (c.cat.group && ['유방양성종양', '자궁근종', '자궁내막증', '갑상선결절'].some(kw => c.cat.group.includes(kw))));
-  // 여성암 진단 (유방암, 자궁암, 난소암 등)
-  const womanCancerDiag = cancerItems.filter(c => c.cat.group && ['여성암', '유방암', '자궁암', '난소암'].some(kw => c.cat.group.includes(kw)));
-  const womanCancerAll = cancerItems.filter(c => c.cat.sub === '진단' && c.cat.group && c.cat.group.includes('여성'));
-  // 5대기관 및 일반 질병 수술
-  const mainItems = surgItems.filter(c => ['5대기관', '질병수술'].includes(c.cat.sub));
-  const specialItems = surgItems.filter(c => ['특수', '전신마취', '양성종양'].includes(c.cat.sub));
+  function byKw(...kws) { return coverages.filter(c => kws.some(kw => c.name.includes(kw))); }
+  function fmtA(kws) {
+    const v = sumAmounts(byKw(...kws));
+    return v ? `<strong style="color:#CC2200;font-size:12px;">${formatManwon(toManwon(v))}</strong>`
+             : `<span style="color:#ccc;font-size:10px;">0만원</span>`;
+  }
+  function fmtP(kws) {
+    const v = Math.round(sumPremiums(byKw(...kws)));
+    return v ? `<strong style="color:#CC2200;">${v.toLocaleString()}원</strong>`
+             : `<span style="color:#ccc;">0원</span>`;
+  }
 
-  const womanBenignMap = [
-    { label: '유방양성종양', kw: ['유방양성', '유방종양'] },
-    { label: '자궁근종', kw: ['자궁근종'] },
-    { label: '자궁내막증', kw: ['자궁내막증'] },
-    { label: '갑상선결절', kw: ['갑상선결절', '갑상선'] },
-  ].map(b => ({
-    label: b.label,
-    amount: surgItems.find(c => b.kw.some(kw => c.name.includes(kw)))?.amount || 0
-  }));
+  const enrollCols = [
+    { label: '여성수술',    kws: ['여성수술','여성특정수술'] },
+    { label: '양성종양수술', kws: ['유방양성','자궁근종','자궁내막증','갑상선결절'] },
+    { label: '5대기관수술', kws: ['5대기관'] },
+    { label: '전신마취수술', kws: ['전신마취'] },
+  ];
 
-  const womanCancerMap = [
-    { label: '유방암', kw: ['유방암'] },
-    { label: '자궁암', kw: ['자궁암', '자궁경부암'] },
-    { label: '난소암', kw: ['난소암'] },
-    { label: '갑상선암', kw: ['갑상선암', '중증갑상선암'] },
-    { label: '폐암', kw: ['폐암'] },
-  ].map(b => ({
-    label: b.label,
-    amount: cancerItems.find(c => b.kw.some(kw => c.name.includes(kw)))?.amount || 0
-  }));
+  const statsRows = [
+    { rank:'1위', label:'자궁근종수술', pct:32.1, cov:'양성종양', kws:['자궁근종'] },
+    { rank:'2위', label:'갑상선절제',   pct:28.4, cov:'양성종양', kws:['갑상선결절','갑상선'] },
+    { rank:'3위', label:'제왕절개',     pct:18.2, cov:'여성수술', kws:['여성수술'] },
+    { rank:'4위', label:'유방수술',     pct:11.6, cov:'양성종양', kws:['유방양성','유방종양'] },
+    { rank:'5위', label:'자궁내막증',   pct:9.7,  cov:'양성종양', kws:['자궁내막증'] },
+  ];
 
-  container.innerHTML = `
-    <div class="proposal-page">
-      ${makePageHeader('🌸', "안 보이는 '수술' 보험을 한눈에 보여주는 스마트제안서 (여성)", '여성 특화 수술·암 보장')}
-      <div class="page-body">
-        <div class="highlight-box" style="background:linear-gradient(135deg, #CC0066, #990044);">
-          <div>
-            <div class="highlight-label">▣ 여성양성종양 집중보장</div>
-            <div style="font-size:12px; opacity:0.8; margin-top:2px;">유방양성종양 / 자궁근종 / 자궁내막증 / 갑상선결절</div>
-          </div>
-          <div class="highlight-amount">${womanSurgItems.length + benignWoman.length + specialItems.length}개 담보</div>
-        </div>
-
-        <div style="margin:14px 0;">
-          <div style="font-size:12px; font-weight:800; color:#CC0066; margin-bottom:8px;">① 여성 양성종양 치료 보장</div>
-          <div class="flow-diagram">
-            ${womanBenignMap.map(b => `
-              <div class="flow-stage">
-                <div class="flow-stage-title">${b.label}</div>
-                <div class="flow-stage-amount">${b.amount > 0 ? formatManwon(toManwon(b.amount)) : '-'}</div>
-              </div>
-            `).join('<div class="flow-arrow">|</div>')}
-          </div>
-        </div>
-
-        <div style="margin:14px 0;">
-          <div style="font-size:12px; font-weight:800; color:#CC0066; margin-bottom:8px;">② 여성암 집중보장</div>
-          <div class="flow-diagram">
-            ${womanCancerMap.map(b => `
-              <div class="flow-stage">
-                <div class="flow-stage-title">${b.label}</div>
-                <div class="flow-stage-amount" style="color:#CC0000;">${b.amount > 0 ? formatManwon(toManwon(b.amount)) : '-'}</div>
-              </div>
-            `).join('<div class="flow-arrow">|</div>')}
-          </div>
-        </div>
-
-        <div class="proposal-grid">
-          ${makeCollapsibleCol('①', '여성 특정 수술', womanSurgItems.length > 0 ? womanSurgItems : benignWoman, '', formatManwon(toManwon(sumAmounts(womanSurgItems.length > 0 ? womanSurgItems : benignWoman))))}
-          ${makeCollapsibleCol('②', '5대기관·주요수술', mainItems, 'blue', formatManwon(toManwon(sumAmounts(mainItems))))}
-          ${makeCollapsibleCol('③', '특수·기타 수술', specialItems, 'purple', specialItems.length + '개')}
-        </div>
-        <div class="section-divider">수술(여) 보장 상세 내역</div>
-        ${renderDetailTable([...womanSurgItems, ...benignWoman, ...mainItems, ...specialItems])}
+  const content = `
+    <div style="padding:12px 15px 10px;font-size:11px;">
+      ${makeSmartTabHdr('수술보험금편(여성)', customer, product, payment, totalPremium, today)}
+      ${makeSmartEnroll('woman', enrollCols, kws => fmtA(kws), kws => fmtP(kws), '')}
+      ${makeSmartStats('📊', '여성 다빈도 수술 통계 (2022년 기준)', 35,
+          ['순위','수술명','구성비','보장담보','보험금'], statsRows, kws => fmtA(kws))}
+      <div style="font-size:8px;color:#999;border-top:1px solid #eee;padding-top:5px;margin-top:2px;">
+        ⚠️ 위 보장내용은 실제 증권 내용과 다를 수 있으며, 정확한 내용은 보험증권을 확인해 주시기 바랍니다.
       </div>
-    </div>
-  `;
+    </div>`;
+
+  container.innerHTML = `<div class="proposal-page">${content}</div>`;
 }
 
 // ===== 운전자 보장 렌더링 =====
 function renderDriver(coverages) {
   const container = document.getElementById('driverContent');
-  const items = getCatCoverages(coverages, '운전자');
+  const customer = document.getElementById('customerName').value.trim() || '고객';
+  const product  = document.getElementById('productName').value.trim() || '';
+  const payment  = document.getElementById('paymentInfo').value.trim() || '';
+  const totalPremium = sumPremiums(coverages);
+  const today = new Date().toLocaleDateString('ko-KR');
 
-  if (items.length === 0) {
-    container.innerHTML = `<div class="card"><div class="empty-state"><div class="empty-state-icon">🚗</div><h3>운전자 담보 없음</h3><p>가입된 운전자 관련 담보가 없습니다.</p></div></div>`;
-    return;
+  function byKw(...kws) { return coverages.filter(c => kws.some(kw => c.name.includes(kw))); }
+  function fmtA(kws) {
+    const v = sumAmounts(byKw(...kws));
+    return v ? `<strong style="color:#CC2200;font-size:12px;">${formatManwon(toManwon(v))}</strong>`
+             : `<span style="color:#ccc;font-size:10px;">0만원</span>`;
+  }
+  function fmtP(kws) {
+    const v = Math.round(sumPremiums(byKw(...kws)));
+    return v ? `<strong style="color:#CC2200;">${v.toLocaleString()}원</strong>`
+             : `<span style="color:#ccc;">0원</span>`;
   }
 
-  container.innerHTML = `
-    <div class="proposal-page">
-      ${makePageHeader('🚗', "안 보이는 '운전자' 보험을 한눈에 보여주는 스마트제안서", '자동차사고 법률·치료 보장')}
-      <div class="page-body">
-        <div class="allinone-grid">
-          <div class="coverage-section">
-            <div class="section-title section-title-driver">🚗 운전자 담보 목록</div>
-            <div class="coverage-list">${makeCoverageList(items)}</div>
-          </div>
-          <div class="card" style="background:var(--orange-pale);">
-            <h3 style="margin-bottom:12px; font-size:15px;">📊 보장 요약</h3>
-            <div style="font-size:32px; font-weight:800; color:var(--orange); text-align:center; margin:16px 0;">${formatManwon(toManwon(sumAmounts(items)))}</div>
-            <div style="font-size:13px; color:var(--text-light); text-align:center;">전체 운전자 담보 합계</div>
-          </div>
-        </div>
-        <div class="section-divider">운전자 보장 상세 내역</div>
-        ${renderDetailTable(items)}
+  const enrollCols = [
+    { label: '교통상해사망',   kws: ['교통','자동차','운전자'] },
+    { label: '자동차사고부상', kws: ['교통사고부상','자동차사고부상'] },
+    { label: '대인배상지원',   kws: ['대인','배상'] },
+    { label: '법률비용',       kws: ['법률','변호사'] },
+  ];
+
+  const statsRows = [
+    { rank:'1위', label:'졸음·주의태만',   pct:38.1, cov:'교통상해', kws:['교통','운전자'] },
+    { rank:'2위', label:'안전거리미확보',  pct:8.2,  cov:'교통상해', kws:['교통','운전자'] },
+    { rank:'3위', label:'신호위반',        pct:5.3,  cov:'교통상해', kws:['교통','운전자'] },
+    { rank:'4위', label:'과속',            pct:4.7,  cov:'교통상해', kws:['교통','운전자'] },
+    { rank:'5위', label:'기타',            pct:43.7, cov:'교통상해', kws:['교통','운전자'] },
+  ];
+
+  const content = `
+    <div style="padding:12px 15px 10px;font-size:11px;">
+      ${makeSmartTabHdr('운전자보험편', customer, product, payment, totalPremium, today)}
+      ${makeSmartEnroll('driver', enrollCols, kws => fmtA(kws), kws => fmtP(kws), '')}
+      ${makeSmartStats('📊', '교통사고 원인별 통계 (2022년 기준)', 45,
+          ['순위','사고원인','구성비','보장담보','보험금'], statsRows, kws => fmtA(kws))}
+      <div style="font-size:8px;color:#999;border-top:1px solid #eee;padding-top:5px;margin-top:2px;">
+        ⚠️ 위 보장내용은 실제 증권 내용과 다를 수 있으며, 정확한 내용은 보험증권을 확인해 주시기 바랍니다.
       </div>
-    </div>
-  `;
+    </div>`;
+
+  container.innerHTML = `<div class="proposal-page">${content}</div>`;
 }
 
 // ===== 입원일당 렌더링 =====
 function renderDaily(coverages) {
   const container = document.getElementById('dailyContent');
-  const items = getCatCoverages(coverages, '입원일당');
+  const customer = document.getElementById('customerName').value.trim() || '고객';
+  const product  = document.getElementById('productName').value.trim() || '';
+  const payment  = document.getElementById('paymentInfo').value.trim() || '';
+  const totalPremium = sumPremiums(coverages);
+  const today = new Date().toLocaleDateString('ko-KR');
 
-  const diseaseItems = items.filter(c => c.cat.sub === '질병');
-  const hospitalItems = items.filter(c => c.cat.sub === '종합병원' || c.cat.sub === '상급종합');
-  const nursingItems = items.filter(c => c.cat.sub === '간호간병');
-  const otherItems = items.filter(c => !['질병', '종합병원', '상급종합', '간호간병'].includes(c.cat.sub));
+  function byKw(...kws) { return coverages.filter(c => kws.some(kw => c.name.includes(kw))); }
+  function fmtA(kws) {
+    const v = sumAmounts(byKw(...kws));
+    return v ? `<strong style="color:#CC2200;font-size:12px;">${formatManwon(toManwon(v))}</strong>`
+             : `<span style="color:#ccc;font-size:10px;">0만원</span>`;
+  }
+  function fmtP(kws) {
+    const v = Math.round(sumPremiums(byKw(...kws)));
+    return v ? `<strong style="color:#CC2200;">${v.toLocaleString()}원</strong>`
+             : `<span style="color:#ccc;">0원</span>`;
+  }
 
-  // 하루 최대 입원일당 계산
-  const maxDaily = items.reduce((sum, c) => {
-    const dv = toManwon(c.amount);
-    return sum + dv;
-  }, 0);
+  const enrollCols = [
+    { label: '일반질병입원', kws: ['질병입원일당','입원일당'] },
+    { label: '종합병원입원', kws: ['종합병원입원'] },
+    { label: '암입원',       kws: ['암입원'] },
+    { label: '뇌심입원',     kws: ['심뇌혈관수술입원일당','심뇌혈관입원일당'] },
+  ];
 
-  container.innerHTML = `
-    <div class="proposal-page">
-      ${makePageHeader('🏥', "안 보이는 '입원일당' 보험을 한눈에 보여주는 스마트제안서", '질병 입원 시 하루 보장 내역')}
-      <div class="page-body">
-        <div class="highlight-box">
-          <div>
-            <div class="highlight-label">종합병원 입원 시 하루 최대 보장</div>
-            <div style="font-size:12px; opacity:0.8; margin-top:2px;">중복 지급 담보 포함 기준</div>
-          </div>
-          <div class="highlight-amount">${maxDaily}만원/일</div>
-        </div>
-        <div class="proposal-grid">
-          ${makeCollapsibleCol('①', '일반 입원일당', diseaseItems, '', diseaseItems.length + '개')}
-          ${makeCollapsibleCol('②', '종합/상급병원 일당', hospitalItems, 'blue', hospitalItems.length + '개')}
-          ${makeCollapsibleCol('③', '간호간병 & 기타', [...nursingItems, ...otherItems], 'purple', (nursingItems.length + otherItems.length) + '개')}
-        </div>
-        <div class="section-divider">입원일당 상세 내역</div>
-        ${renderDetailTable(items)}
+  const statsRows = [
+    { rank:'1위', label:'정신질환',   pct:'28.1일', cov:'입원일당',   kws:['질병입원일당','입원일당'] },
+    { rank:'2위', label:'근골격계질환',pct:'16.8일', cov:'입원일당',   kws:['질병입원일당','입원일당'] },
+    { rank:'3위', label:'뇌혈관질환', pct:'14.7일', cov:'뇌심입원',   kws:['심뇌혈관수술입원일당','심뇌혈관입원일당'] },
+    { rank:'4위', label:'암',          pct:'12.3일', cov:'암입원',     kws:['암입원'] },
+    { rank:'5위', label:'심장질환',   pct:'9.8일',  cov:'뇌심입원',   kws:['심뇌혈관수술입원일당','심뇌혈관입원일당'] },
+    { rank:'6위', label:'소화기질환', pct:'7.2일',  cov:'입원일당',   kws:['질병입원일당','입원일당'] },
+  ];
+
+  const content = `
+    <div style="padding:12px 15px 10px;font-size:11px;">
+      ${makeSmartTabHdr('입원일당편', customer, product, payment, totalPremium, today)}
+      ${makeSmartEnroll('daily', enrollCols, kws => fmtA(kws), kws => fmtP(kws), '')}
+      ${makeSmartStats('📊', '질환별 평균 입원일수 통계', 30,
+          ['순위','질환명','평균입원일','보장담보','하루보험금'], statsRows, kws => fmtA(kws))}
+      <div style="font-size:8px;color:#999;border-top:1px solid #eee;padding-top:5px;margin-top:2px;">
+        ⚠️ 위 보장내용은 실제 증권 내용과 다를 수 있으며, 정확한 내용은 보험증권을 확인해 주시기 바랍니다.
       </div>
-    </div>
-  `;
+    </div>`;
+
+  container.innerHTML = `<div class="proposal-page">${content}</div>`;
 }
 
 // ===== 수술(남) 렌더링 =====
 function renderSurgery(coverages) {
   const container = document.getElementById('surgeryContent');
-  const items = getCatCoverages(coverages, '수술');
+  const customer = document.getElementById('customerName').value.trim() || '고객';
+  const product  = document.getElementById('productName').value.trim() || '';
+  const payment  = document.getElementById('paymentInfo').value.trim() || '';
+  const totalPremium = sumPremiums(coverages);
+  const today = new Date().toLocaleDateString('ko-KR');
 
-  const mainItems = items.filter(c => c.cat.sub === '5대기관');
-  const diseaseItems = items.filter(c => c.cat.sub === '질병수술');
-  const maleItems = items.filter(c => c.cat.sub === '남성수술');
-  const specialItems = items.filter(c => c.cat.sub === '특수' || c.cat.sub === '전신마취' || c.cat.sub === '양성종양');
-  const rehabItems = items.filter(c => c.cat.sub === '재활');
+  function byKw(...kws) { return coverages.filter(c => kws.some(kw => c.name.includes(kw))); }
+  function fmtA(kws) {
+    const v = sumAmounts(byKw(...kws));
+    return v ? `<strong style="color:#CC2200;font-size:12px;">${formatManwon(toManwon(v))}</strong>`
+             : `<span style="color:#ccc;font-size:10px;">0만원</span>`;
+  }
+  function fmtP(kws) {
+    const v = Math.round(sumPremiums(byKw(...kws)));
+    return v ? `<strong style="color:#CC2200;">${v.toLocaleString()}원</strong>`
+             : `<span style="color:#ccc;">0원</span>`;
+  }
 
-  // 남성 양성종양 집계
-  const benignMap = [
-    { label: '대장용종', amount: items.find(c => c.name.includes('대장양성종양') || c.name.includes('폴립'))?.amount || 0 },
-    { label: '갑상선결절', amount: items.find(c => c.name.includes('갑상선'))?.amount || 0 },
-    { label: '신장낭종', amount: items.find(c => c.name.includes('신장낭종') || c.name.includes('비뇨기'))?.amount || 0 },
-    { label: '담낭용종', amount: items.find(c => c.name.includes('담낭'))?.amount || 0 },
+  const enrollCols = [
+    { label: '5대기관수술',  kws: ['5대기관'] },
+    { label: '남성수술',      kws: ['남성수술'] },
+    { label: '양성종양수술',  kws: ['대장양성종양','갑상선','신장낭종','담낭'] },
+    { label: '전신마취수술',  kws: ['전신마취'] },
   ];
 
-  container.innerHTML = `
-    <div class="proposal-page">
-      ${makePageHeader('⚕️', "안 보이는 '수술' 보험을 한눈에 보여주는 스마트제안서 (남성)", '남성 특화 수술 보장')}
-      <div class="page-body">
-        <div class="highlight-box">
-          <div>
-            <div class="highlight-label">▣ 남성 양성종양 치료 집중 보장</div>
-            <div style="font-size:12px; opacity:0.8; margin-top:2px;">대장용종 / 갑상선결절 / 신장낭종 / 담낭용종</div>
-          </div>
-          <div class="highlight-amount">${maleItems.length + specialItems.length}개 담보</div>
-        </div>
-        <div class="flow-diagram">
-          ${benignMap.map(b => `
-            <div class="flow-stage">
-              <div class="flow-stage-title">${b.label}</div>
-              <div class="flow-stage-amount">${b.amount > 0 ? formatManwon(toManwon(b.amount)) : '-'}</div>
-            </div>
-          `).join('<div class="flow-arrow">|</div>')}
-        </div>
-        <div class="proposal-grid">
-          ${makeCollapsibleCol('①', '5대기관·주요수술', [...mainItems, ...diseaseItems], '', formatManwon(toManwon(sumAmounts([...mainItems, ...diseaseItems]))))}
-          ${makeCollapsibleCol('②', '남성 특정 수술', maleItems, 'blue', formatManwon(toManwon(sumAmounts(maleItems))))}
-          ${makeCollapsibleCol('③', '특수·기타 수술', [...specialItems, ...rehabItems], 'purple', (specialItems.length + rehabItems.length) + '개')}
-        </div>
-        <div class="section-divider">수술 보장 상세 내역</div>
-        ${renderDetailTable(items)}
+  const statsRows = [
+    { rank:'1위', label:'대장내시경수술', pct:29.8, cov:'양성종양', kws:['대장양성종양'] },
+    { rank:'2위', label:'담낭절제',       pct:22.4, cov:'양성종양', kws:['담낭'] },
+    { rank:'3위', label:'갑상선수술',     pct:18.1, cov:'양성종양', kws:['갑상선'] },
+    { rank:'4위', label:'전립선수술',     pct:12.7, cov:'남성수술', kws:['남성수술'] },
+    { rank:'5위', label:'5대기관수술',    pct:17.0, cov:'5대기관',  kws:['5대기관'] },
+  ];
+
+  const content = `
+    <div style="padding:12px 15px 10px;font-size:11px;">
+      ${makeSmartTabHdr('수술보험금편(남성)', customer, product, payment, totalPremium, today)}
+      ${makeSmartEnroll('surgery', enrollCols, kws => fmtA(kws), kws => fmtP(kws), '')}
+      ${makeSmartStats('📊', '남성 다빈도 수술 통계 (2022년 기준)', 35,
+          ['순위','수술명','구성비','보장담보','보험금'], statsRows, kws => fmtA(kws))}
+      <div style="font-size:8px;color:#999;border-top:1px solid #eee;padding-top:5px;margin-top:2px;">
+        ⚠️ 위 보장내용은 실제 증권 내용과 다를 수 있으며, 정확한 내용은 보험증권을 확인해 주시기 바랍니다.
       </div>
-    </div>
-  `;
+    </div>`;
+
+  container.innerHTML = `<div class="proposal-page">${content}</div>`;
 }
 
 // ===== 공통 헬퍼 =====
