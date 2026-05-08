@@ -506,6 +506,20 @@ function scaleDesktopFonts() {
   });
 }
 
+// scaleDesktopFonts() 역함수 — 인쇄 전 원본 크기로 복원
+function unscaleDesktopFonts() {
+  if (window.innerWidth < 769) return;
+  document.querySelectorAll('.proposal-page').forEach(page => {
+    page.querySelectorAll('[style]').forEach(el => {
+      const s = el.getAttribute('style');
+      if (!s.includes('font-size')) return;
+      el.setAttribute('style', s.replace(/font-size\s*:\s*(\d+(?:\.\d+)?)px/g, (_, n) =>
+        `font-size:${Math.max(parseFloat(n) - 15, 6)}px`
+      ));
+    });
+  });
+}
+
 // ===== 올인원 렌더링 =====
 function renderAllinone(coverages) {
   const container = document.getElementById('allinoneContent');
@@ -1924,6 +1938,9 @@ function printSection(section) {
   switchTab(section);
 
   setTimeout(() => {
+    // 인쇄 전: +15px 스케일 원본으로 되돌리기
+    unscaleDesktopFonts();
+
     // A4 print area (210mm × 297mm at 96dpi, no margins)
     const A4W = 794, A4H = 1123;
     const pages = document.querySelectorAll('#content-' + section + ' .proposal-page');
@@ -1939,6 +1956,8 @@ function printSection(section) {
 
     setTimeout(() => {
       pages.forEach((p, i) => { p.style.zoom = savedZooms[i]; });
+      // 인쇄 후: +15px 다시 적용
+      scaleDesktopFonts();
       if (prevId) setTimeout(() => switchTab(prevId), 100);
     }, 1000);
   }, 400);
