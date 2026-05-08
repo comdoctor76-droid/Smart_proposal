@@ -544,7 +544,7 @@ function renderAllinone(coverages) {
         return `<td style="text-align:center;padding:6px 4px;border-left:1px solid #FF880033;${bg}">${val}</td>`;
       }).join('');
       return `<tr>
-        <td style="padding:5px 12px;font-size:10px;font-weight:800;color:#555;white-space:nowrap;${bg}">▶ ${r.label}</td>
+        <td style="padding:5px 12px;font-size:10px;font-weight:800;color:#555;${bg}">▶ ${r.label}</td>
         ${cells}
       </tr>`;
     }).join('');
@@ -960,7 +960,7 @@ function renderCancer(coverages) {
     const dataRows = rows.map((r, i) => `
       <tr style="background:${i%2===0?'white':'#F8F9FE'};">
         <td style="padding:5px 6px;font-size:10px;font-weight:700;
-            color:${r.bold?OR:'#444'};border-right:1px solid #CDD5E8;white-space:nowrap;">${r.label}</td>
+            color:${r.bold?OR:'#444'};border-right:1px solid #CDD5E8;">${r.label}</td>
         ${cols.map(c => `<td style="text-align:center;padding:5px 2px;border-left:1px solid #CDD5E8;">
             ${fmtCell(c.kws, r.rowKw)}</td>`).join('')}
       </tr>`).join('');
@@ -1113,7 +1113,7 @@ function renderBrain(coverages) {
     const dataRows = rows.map((r, i) => `
       <tr style="background:${i%2===0?'white':'#F8F9FE'};">
         <td style="padding:5px 6px;font-size:10px;font-weight:700;
-            color:${r.bold?OR:'#444'};border-right:1px solid #CDD5E8;white-space:nowrap;">${r.label}</td>
+            color:${r.bold?OR:'#444'};border-right:1px solid #CDD5E8;">${r.label}</td>
         ${cols.map(c => `<td style="text-align:center;padding:5px 2px;border-left:1px solid #CDD5E8;">
             ${fmtCell(c.kws, r.rowKw)}</td>`).join('')}
       </tr>`).join('');
@@ -1234,7 +1234,7 @@ function renderHeart(coverages) {
     const dataRows = rows.map((r, i) => `
       <tr style="background:${i%2===0?'white':'#F8F9FE'};">
         <td style="padding:5px 6px;font-size:10px;font-weight:700;
-            color:${r.bold?OR:'#444'};border-right:1px solid #CDD5E8;white-space:nowrap;">${r.label}</td>
+            color:${r.bold?OR:'#444'};border-right:1px solid #CDD5E8;">${r.label}</td>
         ${cols.map(c => `<td style="text-align:center;padding:5px 2px;border-left:1px solid #CDD5E8;">
             ${fmtCell(c.kws, r.rowKw)}</td>`).join('')}
       </tr>`).join('');
@@ -1545,7 +1545,7 @@ function renderWoman(coverages) {
     const dataRows = rows.map((r, i) => `
       <tr style="background:${i%2===0?'white':'#F8F9FE'};">
         <td style="padding:5px 6px;font-size:10px;font-weight:700;
-            color:${r.bold?OR:'#444'};border-right:1px solid #CDD5E8;white-space:nowrap;">${r.label}</td>
+            color:${r.bold?OR:'#444'};border-right:1px solid #CDD5E8;">${r.label}</td>
         ${cols.map(c => `<td style="text-align:center;padding:5px 2px;border-left:1px solid #CDD5E8;">
             ${fmtCell(c.kws, r.rowKw)}</td>`).join('')}
       </tr>`).join('');
@@ -1768,7 +1768,7 @@ function renderSurgery(coverages) {
     const dataRows = rows.map((r, i) => `
       <tr style="background:${i%2===0?'white':'#F8F9FE'};">
         <td style="padding:5px 6px;font-size:10px;font-weight:700;
-            color:${r.bold?OR:'#444'};border-right:1px solid #CDD5E8;white-space:nowrap;">${r.label}</td>
+            color:${r.bold?OR:'#444'};border-right:1px solid #CDD5E8;">${r.label}</td>
         ${cols.map(c => `<td style="text-align:center;padding:5px 2px;border-left:1px solid #CDD5E8;">
             ${fmtCell(c.kws, r.rowKw)}</td>`).join('')}
       </tr>`).join('');
