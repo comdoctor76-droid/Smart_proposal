@@ -2034,9 +2034,21 @@ function showMobilePrintPopup(section) {
     const prevId = prevActive ? prevActive.id.replace('content-', '') : null;
     switchTab(section);
     setTimeout(() => {
+      // 모바일도 A4 한 장 맞춤 zoom 적용
+      const A4W = 794, A4H = 1123;
+      const pages = document.querySelectorAll('#content-' + section + ' .proposal-page');
+      const savedZooms = [];
+      pages.forEach(p => {
+        savedZooms.push(p.style.zoom || '');
+        const scale = Math.min(A4W / p.scrollWidth, A4H / p.scrollHeight, 1);
+        p.style.zoom = parseFloat(scale.toFixed(3));
+      });
       window.print();
-      if (prevId) setTimeout(() => switchTab(prevId), 800);
-    }, 300);
+      setTimeout(() => {
+        pages.forEach((p, i) => { p.style.zoom = savedZooms[i]; });
+        if (prevId) setTimeout(() => switchTab(prevId), 800);
+      }, 1000);
+    }, 500);
   });
 
   document.getElementById('mpBtnCancel').addEventListener('click', () => overlay.remove());
